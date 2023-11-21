@@ -211,7 +211,7 @@ class Organization:
         return self.rooms.get(room_id)
 
     def add_room(self, room):
-        self.rooms[room.name] = room
+        self.rooms[0] = room
 
     #Read for room
     def read_organization_room(self, id):
@@ -220,7 +220,7 @@ class Organization:
     #Update for room
     def update_organization_room(self, room_id, **kwargs):
         if room_id in self.rooms:
-            self.get_room(room_id).update_room(kwargs)
+            (self.get_room(room_id)).update_room(**kwargs)
             """for key, value in kwargs.items():
                 if hasattr(self.rooms[room_id], key):
                     setattr(self.rooms[room_id], key, value)
@@ -266,6 +266,7 @@ event = Event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["
 #event1.update_event(description="Bi-weekly team meeting")
 org.add_room(room)
 org.add_event(event)
-org.update_organization_room(0, description="Bi-weekly team meeting")
+org.read_organization_room(0)
+org.update_organization_room(0, name="zort")
 
 # Logic to reserve rooms, query events, etc., can be added following the project specifications
