@@ -30,6 +30,9 @@ class Room:
         """
         return cls(name, x, y, capacity, working_hours, permissions)
 
+    def get_permissions(self):
+        return self.permissions
+
     def read_room(self):
         """
         Class method to read a Room's details.
@@ -80,6 +83,8 @@ class Event:
         self.duration = duration
         self.weekly = weekly
         self.permissions = permissions
+        self.start_time = None
+        self.location = None
 
     @classmethod
     def create_event(cls, title, description, category, capacity, duration, weekly, permissions):
@@ -165,41 +170,102 @@ print(room1.read_room())  # This will return None
 
 
 class Organization:
-    def __init__(self):
+    #map changed to mapOrganization since map is reserved word
+    def __init__(self, owner, name, mapOrganization, backgroundImage = None):
+        self.owner = owner
+        self.name = name
+        self.map = mapOrganization
+        self.backgroundImage = backgroundImage
         self.rooms = {}
         self.events = {}
         self.views = {}
 
     @classmethod
-    def create_organization(cls):
-        return cls()
+    def create_organization(cls, owner, name, mapOrganization, backgroundImage = None):
+        return cls(owner, name, mapOrganization, backgroundImage)
 
     def read_organization(self):
-        return {"rooms": self.rooms, 
+        return {"owner": self.owner,
+                "name": self.name,
+                "map": self.map,
+                "backgroundImage": self.backgroundImage,
+                "rooms": self.rooms, 
                 "events": self.events, 
                 "views": self.views}
+    
+    def update_organization(self, **kwargs):
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                raise AttributeError(f"Attribute {key} not found in Event")
+
+    def delete_organization(self):
+        del self
+
+    #Create for room will be deleted -- probably
+    def create_organization_room(self, name, x, y, capacity, working_hours, permissions):
+        return Room.create_room(name, x, y, capacity, working_hours, permissions)
+
+    def get_room(self, room_id):
+        return self.rooms.get(room_id)
 
     def add_room(self, room):
         self.rooms[room.name] = room
 
-    def get_room(self, roomName):
-        return rooms[roomName]
+    #Read for room
+    def read_organization_room(self, id):
+        return self.get_room(id).read_room()
+    
+    #Update for room
+    def update_organization_room(self, room_id, **kwargs):
+        if room_id in self.rooms:
+            self.get_room(room_id).update_room(kwargs)
+            """for key, value in kwargs.items():
+                if hasattr(self.rooms[room_id], key):
+                    setattr(self.rooms[room_id], key, value)
+                else:
+                    raise AttributeError(f"Attribute {key} not found in Room")"""
+        else:
+            raise ValueError(f"No room found with ID {room_id}")
+
+    #Delete for room
+    def delete_organization_room(self, room_id):
+        if room_id in self.rooms:
+            del self.rooms[room_id]
+            self.get_room(room_id).delete_room()
+        else:
+            raise ValueError(f"No room found with ID {room_id}")
 
     def add_event(self, event):
         self.events[event.title] = event
 
-    def reserve_room(self, event_title, room_name, start_time):
-        # Add logic to reserve a room for an event
+    def reserve(self, event_title, room_name, start_time):
         pass
 
-    # Additional methods for CRUD operations on rooms and events can be added here
+    def find_room(self, event, rect, start, end):
+        pass
+    
+    def find_schedule(self, eventlist, rect, start, end):
+        pass
+
+    def reassign(event, room):
+        pass
+    
+    def query(rect, title, category, room):
+        pass
+
+    
+
+    
 
 # Example usage
-org = Organization()
+org = Organization("Ahmed Muhsin", "Kirpi", "map")
 room = Room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
 event = Event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
-
+#event1.update_event(description="Bi-weekly team meeting")
 org.add_room(room)
 org.add_event(event)
+org.update_organization_room(0, description="Bi-weekly team meeting")
 
 # Logic to reserve rooms, query events, etc., can be added following the project specifications
