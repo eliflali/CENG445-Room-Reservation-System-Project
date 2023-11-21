@@ -56,7 +56,7 @@ class SingletonMeta(type):
         return cls._instances[cls]
 
 
-class UserManager:
+class UserManager(metaclass=SingletonMeta):
     def __init__(self):
         self.current_user = None
         self.users = {}  # Dictionary to store user objects
