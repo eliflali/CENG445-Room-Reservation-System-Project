@@ -2,8 +2,6 @@ import code
 import os
 
 def load_models():
-    # Assuming your models.py is in the same directory as this script
-    # If models.py is in a different directory, adjust the path accordingly
     models_path = os.path.join(os.path.dirname(__file__), 'models.py')
     with open(models_path, 'rb') as models_file:
         exec(compile(models_file.read(), models_path, 'exec'))

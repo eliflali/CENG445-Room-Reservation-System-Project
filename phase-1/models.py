@@ -2,6 +2,9 @@ import uuid
 import hashlib
 import secrets
 
+
+import faker
+
 class SingletonMeta(type):
     """
     A Singleton metaclass that creates only one instance of a class.
@@ -21,6 +24,9 @@ class UserManager(metaclass=SingletonMeta):
 
     def add_user(self, user):
         self.users[user.id] = user
+        if self.current_user is None:
+            self.current_user = user
+            print ("Current user set to: ", self.current_user.get())
 
     def switch_user(self, user_id):
         if user_id in self.users:
@@ -31,6 +37,12 @@ class UserManager(metaclass=SingletonMeta):
 
     def get_current_user(self):
         return self.current_user
+    
+    def get_user(self, user_id):
+        return self.users.get(user_id)
+    
+    def get_users(self):
+        return self.users
 
 class CRUD:
     def __init__(self, **kwargs):
@@ -63,6 +75,7 @@ class User(CRUD):
         super().__init__(username=username, email=email, fullname=fullname)
         self.password_hash = self._hash_password(passwd)
         self.session_token = None
+        UserManager().add_user(self)
 
     def _hash_password(self, passwd):
         # Use hashlib or another library to hash the password
@@ -131,6 +144,8 @@ class Event:
 
 
 class Organization(CRUD):
+    objects = {}  # Dictionary to store Organization objects
+    
     #map changed to mapOrganization since map is reserved word
     def __init__(self, owner, name, mapOrganization, backgroundImage = None):
         super().__init__(name=name, mapOrganization=mapOrganization, backgroundImage=backgroundImage)
@@ -139,6 +154,11 @@ class Organization(CRUD):
         self.rooms = {}
         self.events = {}
 
+    @classmethod
+    def listobjects(cls):
+        # List all objects of this class
+        return cls.objects
+    
     def delete(self):
         for room in self.rooms:
             room.delete_room()
@@ -155,24 +175,16 @@ class Organization(CRUD):
         new_room = Room(current_user, name, x, y, capacity, working_hours, permissions)
         id = new_room.get_id()
         self.rooms[id] = new_room
+        self.objects[id] = f"room_{new_room.get()[name]}"
         return id
 
     def get_room(self, room_id):
         return self.rooms.get(room_id)
     
-    #Read for room
-    def read_organization_room(self, id):
-        return self.rooms[id].get_room()
-    
     #Update for room
     def update_organization_room(self, room_id, **kwargs):
         if room_id in self.rooms:
             return self.rooms[room_id].update_room(**kwargs)
-            """for key, value in kwargs.items():
-                if hasattr(self.rooms[room_id], key):
-                    setattr(self.rooms[room_id], key, value)
-                else:
-                    raise AttributeError(f"Attribute {key} not found in Room")"""
         else:
             raise ValueError(f"No room found with ID {room_id}")
 
@@ -180,12 +192,37 @@ class Organization(CRUD):
     def delete_organization_room(self, room_id):
         if room_id in self.rooms:
             self.rooms[room_id].delete_room()
+            self.objects[room_id].delete()
             del self.rooms[room_id]
         else:
             raise ValueError(f"No room found with ID {room_id}")
 
-    def add_event(self, event):
-        self.events[event.title] = event
+    def create_organization_event(self, title, description, category, capacity, duration, weekly, permissions):
+        current_user = self.user_manager.get_current_user()
+        if current_user is None:
+            raise Exception("No current user set in UserManager.")
+        new_event = Event(title, description, category, capacity, duration, weekly, permissions)
+        id = new_event.get_id()
+        self.events[id] = new_event
+        self.objects[id] = f"event_{new_event.get()[title]}"
+        return id
+    
+    def get_event(self, event_id):
+        return self.events.get(event_id)
+    
+    def update_organization_event(self, event_id, **kwargs):
+        if event_id in self.events:
+            return self.events[event_id].update_event(**kwargs)
+        else:
+            raise ValueError(f"No event found with ID {event_id}")
+    
+    def delete_organization_event(self, event_id):
+        if event_id in self.events:
+            self.events[event_id].delete_event()
+            self.objects[event_id].delete()
+            del self.events[event_id]
+        else:
+            raise ValueError(f"No event found with ID {event_id}")
 
     def reserve(self, event_title, room_name, start_time):
         pass
@@ -201,3 +238,19 @@ class Organization(CRUD):
     
     def query(rect, title, category, room):
         pass
+
+
+def create_fake_data():
+    fake = faker.Faker()
+    user_manager = UserManager()
+    user1 = User(username="user1", email=fake.email(), fullname=fake.name(), passwd="123")
+    user2 = User(username="user2", email=fake.email(), fullname=fake.name(), passwd="123")
+    user3 = User(username="user3", email=fake.email(), fullname=fake.name(), passwd="123")
+    
+    org1 = Organization(user1, name="org1", mapOrganization="map1")
+    
+    org1.create_organization_room(name="room1", x=1, y=1, capacity=10, working_hours="9-5", permissions="all")
+    org1.create_organization_room(name="room2", x=2, y=2, capacity=20, working_hours="9-5", permissions="all")
+    org1.create_organization_event(title="event1", description="desc1", category="cat1", capacity=10, duration=2, weekly=True, permissions="all")   
+    org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=2, weekly=True, permissions="all")
+    
