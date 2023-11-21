@@ -94,24 +94,10 @@ class Room:
         self.permissions = permissions
         # Additional attributes like location can be added here
 
-    @classmethod
-    def create_room(cls, user, name, x, y, capacity, working_hours, permissions):
-        """
-        Class method to create a new Room.
-        :param name: String, the name of the room.
-        :param x: Float, the x-coordinate of the room's location.
-        :param y: Float, the y-coordinate of the room's location.
-        :param capacity: Integer, the capacity of the room.
-        :param working_hours: String, the working hours of the room.
-        :param permissions: List, the list of permissions required to access the room.
-        :return: Room object, the created room.
-        """
-        return cls(user, name, x, y, capacity, working_hours, permissions)
-
     def get_permissions(self):
         return self.permissions
 
-    def read_room(self):
+    def get_room(self):
         """
         Class method to read a Room's details.
         :return: attributes of room object in dictionary form.
@@ -132,12 +118,12 @@ class Room:
         return True
 
     def delete_room(self, name):
-            """
-            Class method to delete a Room.
-            :param name: String, the name of the room to delete.
-            """
-            del self
-            return True
+        """
+        Class method to delete a Room.
+        :param name: String, the name of the room to delete.
+        """
+        del self
+        return True
     
     def get_capacity(self):
         return self.capacity
@@ -177,22 +163,7 @@ class Event:
         self.start_time = None
         self.location = None
 
-    @classmethod
-    def create_event(cls, title, description, category, capacity, duration, weekly, permissions):
-        """
-        Class method to create a new Event.
-        :param title: String, the title of the event.
-        :param description: String, the description of the event.
-        :param category: String, the category of the event.
-        :param capacity: Integer, the required capacity for the event.
-        :param duration: Integer, the duration of the event in minutes.
-        :param weekly: Boolean, True if the event occurs weekly, False otherwise.
-        :param permissions: List, the list of permissions required to attend the event.
-        :return: Event object, the created event.
-        """
-        return cls(title, description, category, capacity, duration, weekly, permissions)
-
-    def read_event(self):
+    def get_event(self):
         """
         Class method to read an Event's details.
         :return: dictionary containing attributes of event object.
@@ -242,7 +213,7 @@ class Event:
 event1 = Event.create_event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
 
 # Reading an event's details
-event_details = event1.read_event()
+event_details = event1.get_event()
 print(event_details)
 
 # Updating an event's details
@@ -320,7 +291,7 @@ class Organization:
     
     #Read for room
     def read_organization_room(self, id):
-        return self.rooms[str(id)].read_room()
+        return self.rooms[id].get_room()
     
     #Update for room
     def update_organization_room(self, room_id, **kwargs):
