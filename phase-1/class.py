@@ -1,6 +1,81 @@
 import uuid
+import hashlib
+
+class User:
+    """"User class for Authentication and Session Management"""
+    
+    def __init__(self, username, email, fullname, passwd):
+        self.id = str(uuid.uuid4())
+        self.username = username
+        self.email = email
+        self.fullname = fullname
+        self.password_hash = self._hash_password(passwd)
+        self.token = None
+        
+    def _hash_password(self, passwd):
+        return hashlib.sha256(passwd.encode()).hexdigest()
+    
+    def auth(self, plainpass):
+        return self.password_hash == self._hash_password(plainpass)
+    
+    def login(self):
+        self.token = str(uuid.uuid4())
+        return self.token
+    
+    def checksession(self,token):
+        return self.token == token
+    
+    def logout(self):
+        self.token = None
+        return True
+    
+    def get(self):
+        return {'id': self.id, 'username': self.username, 'email': self.email, 'fullname': self.fullname}
+    
+    def _repr_(self) -> str:
+        return f"<User {self.username}>"
+    
+    def update(self, **kwargs):
+        for key, value in kwargs.items():
+            if key == 'passwd':
+                value = self._hash_password(value)
+            setattr(self, key, value)
+            
+    def delete(self):
+        del self
+
+class SingletonMeta(type):
+    """
+    A Singleton metaclass that creates only one instance of a class.
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class UserManager:
+    def __init__(self):
+        self.current_user = None
+        self.users = {}  # Dictionary to store user objects
+
+    def add_user(self, user):
+        self.users[user.id] = user
+
+    def switch_user(self, user_id):
+        if user_id in self.users:
+            self.current_user = self.users[user_id]
+        else:
+            raise ValueError("User ID not found")
+
+    def get_current_user(self):
+        return self.current_user
+
+
 class Room:
-    def __init__(self, name, x, y, capacity, working_hours, permissions):
+    def __init__(self, user, name, x, y, capacity, working_hours, permissions):
         """
         Constructor for creating a new Room object.
         :param name: String, the name of the room.
@@ -11,6 +86,7 @@ class Room:
         :param permissions: List, the list of permissions required to access the room.
         """
         self.id = uuid.uuid4()
+        self.user = user
         self.name = name
         self.coordinates = (x, y)
         self.capacity = capacity
@@ -19,7 +95,7 @@ class Room:
         # Additional attributes like location can be added here
 
     @classmethod
-    def create_room(cls, name, x, y, capacity, working_hours, permissions):
+    def create_room(cls, user, name, x, y, capacity, working_hours, permissions):
         """
         Class method to create a new Room.
         :param name: String, the name of the room.
@@ -30,7 +106,7 @@ class Room:
         :param permissions: List, the list of permissions required to access the room.
         :return: Room object, the created room.
         """
-        return cls(name, x, y, capacity, working_hours, permissions)
+        return cls(user, name, x, y, capacity, working_hours, permissions)
 
     def get_permissions(self):
         return self.permissions
@@ -71,6 +147,10 @@ class Room:
     
     def get_permissions(self):
         return self.permissions
+
+    def get_id(self):
+        return self.id
+
 
 
 
@@ -174,7 +254,7 @@ event1.delete_event("Team Meeting")
 print(event1.read_event())  # This will return None
 
 
-# Example Usage
+"""# Example Usage
 # Creating a room
 room1 = Room.create_room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
 
@@ -189,13 +269,14 @@ print(room1)
 # Deleting a room
 room1.delete_room("Conference Room")
 print(room1.read_room())  # This will return None
-
+"""
 
 class Organization:
     #map changed to mapOrganization since map is reserved word
     def __init__(self, owner, name, mapOrganization, backgroundImage = None):
         self.id = uuid.uuid4()
-        self.owner = owner
+        self.user_manager = owner #UserManager is singleton instance.
+        self.owner = owner.get_current_user()
         self.name = name
         self.map = mapOrganization
         self.backgroundImage = backgroundImage
@@ -226,7 +307,10 @@ class Organization:
         del self
 
     def create_organization_room(self, name, x, y, capacity, working_hours, permissions):
-        new_room = Room(name, x, y, capacity, working_hours, permissions)
+        current_user = self.user_manager.get_current_user()
+        if current_user is None:
+            raise Exception("No current user set in UserManager.")
+        new_room = Room(current_user, name, x, y, capacity, working_hours, permissions)
         id = new_room.get_id()
         self.rooms[id] = new_room
         return id
@@ -236,7 +320,7 @@ class Organization:
     
     #Read for room
     def read_organization_room(self, id):
-        return self.rooms[id].read_room()
+        return self.rooms[str(id)].read_room()
     
     #Update for room
     def update_organization_room(self, room_id, **kwargs):
@@ -278,16 +362,17 @@ class Organization:
 
     
 
-    
-
+user_manager = UserManager()
+user1 = User("Ahmed Muhsin", "Ahmed Muhsin", "Ahmed Muhsin Kirpi", "aslkd")
+user_manager.add_user(user1)
+user_manager.switch_user(user1.id) 
+print(user_manager.get_current_user().get())
 # Example usage
-org = Organization("Ahmed Muhsin", "Kirpi", "map")
-room = Room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
+org = Organization(user_manager, "Kirpi", "map")
+#room = Room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
 event = Event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
 #event1.update_event(description="Bi-weekly team meeting")
-org.add_room(room)
+org.create_organization_room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
 org.add_event(event)
-org.read_organization_room(0)
-org.update_organization_room(0, name="zort")
 
 # Logic to reserve rooms, query events, etc., can be added following the project specifications
