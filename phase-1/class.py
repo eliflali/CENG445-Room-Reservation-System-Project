@@ -1,3 +1,4 @@
+import uuid
 class Room:
     def __init__(self, name, x, y, capacity, working_hours, permissions):
         """
@@ -9,6 +10,7 @@ class Room:
         :param working_hours: String, the working hours of the room.
         :param permissions: List, the list of permissions required to access the room.
         """
+        self.id = uuid.uuid4()
         self.name = name
         self.coordinates = (x, y)
         self.capacity = capacity
@@ -38,11 +40,7 @@ class Room:
         Class method to read a Room's details.
         :return: attributes of room object in dictionary form.
         """
-        return {"name": self.name, 
-                "coordinates": self.coordinates, 
-                "capacity": self.capacity,
-                "working_hours": self.working_hours,
-                "permissions": self.permissions}
+        return vars(self)
 
     def update_room(self, **kwargs):
         """
@@ -55,6 +53,7 @@ class Room:
                 setattr(self, key, value)
             else:
                 raise AttributeError(f"Attribute {key} not found in Room")
+        return True
 
     def delete_room(self, name):
             """
@@ -62,6 +61,17 @@ class Room:
             :param name: String, the name of the room to delete.
             """
             del self
+            return True
+    
+    def get_capacity(self):
+        return self.capacity
+    
+    def get_working_hours(self):
+        return self.working_hours
+    
+    def get_permissions(self):
+        return self.permissions
+
 
 
 class Event:
@@ -76,6 +86,7 @@ class Event:
         :param weekly: Boolean, True if the event occurs weekly, False otherwise.
         :param permissions: List, the list of permissions required to attend the event.
         """
+        self.id = uuid.uuid4()
         self.title = title
         self.description = description
         self.category = category
@@ -106,13 +117,7 @@ class Event:
         Class method to read an Event's details.
         :return: dictionary containing attributes of event object.
         """
-        return {"title": self.title, 
-                "description": self.description,
-                "category": self.category,
-                "capacity": self.capacity,
-                "duration": self.duration,
-                "weekly": self.weekly,
-                "permissions": self.permissions}
+        return vars(self)
     
     def update_event(self, **kwargs):
         """
@@ -133,7 +138,24 @@ class Event:
         :raises ValueError: If the event to delete is not found.
         """
         del self
-
+    
+    def get_permissions(self):
+        return self.permissions
+    
+    def get_capacity(self):
+        return self.capacity
+    
+    def get_duration(self):
+        return self.duration
+    
+    def get_weekly(self):
+        return self.weekly
+    
+    def get_category(self):
+        return self.category
+    
+    def get_id(self):
+        return self.id
 
 # Example Usage
 # Creating an event
@@ -172,26 +194,20 @@ print(room1.read_room())  # This will return None
 class Organization:
     #map changed to mapOrganization since map is reserved word
     def __init__(self, owner, name, mapOrganization, backgroundImage = None):
+        self.id = uuid.uuid4()
         self.owner = owner
         self.name = name
         self.map = mapOrganization
         self.backgroundImage = backgroundImage
         self.rooms = {}
         self.events = {}
-        self.views = {}
 
     @classmethod
     def create_organization(cls, owner, name, mapOrganization, backgroundImage = None):
         return cls(owner, name, mapOrganization, backgroundImage)
 
     def read_organization(self):
-        return {"owner": self.owner,
-                "name": self.name,
-                "map": self.map,
-                "backgroundImage": self.backgroundImage,
-                "rooms": self.rooms, 
-                "events": self.events, 
-                "views": self.views}
+        return vars(self)
     
     def update_organization(self, **kwargs):
         for key, value in kwargs.items():
@@ -201,39 +217,36 @@ class Organization:
                 raise AttributeError(f"Attribute {key} not found in Event")
 
     def delete_organization(self):
+        for room in self.rooms:
+            room.delete_room()
+            
+        for event in self.events:
+            event.delete_event()
+            
         del self
 
-    #Create for room will be deleted -- probably
     def create_organization_room(self, name, x, y, capacity, working_hours, permissions):
-        return Room.create_room(name, x, y, capacity, working_hours, permissions)
+        new_room = Room(name, x, y, capacity, working_hours, permissions)
+        id = new_room.get_id()
+        self.rooms[id] = new_room
+        return id
 
     def get_room(self, room_id):
         return self.rooms.get(room_id)
-
-    def add_room(self, room):
-        self.rooms[0] = room
-
+    
     #Read for room
     def read_organization_room(self, id):
-        return self.get_room(id).read_room()
+        return self.rooms[id].read_room()
     
     #Update for room
     def update_organization_room(self, room_id, **kwargs):
-        if room_id in self.rooms:
-            (self.get_room(room_id)).update_room(**kwargs)
-            """for key, value in kwargs.items():
-                if hasattr(self.rooms[room_id], key):
-                    setattr(self.rooms[room_id], key, value)
-                else:
-                    raise AttributeError(f"Attribute {key} not found in Room")"""
-        else:
-            raise ValueError(f"No room found with ID {room_id}")
+        return self.rooms[room_id].update_room(**kwargs)
 
     #Delete for room
     def delete_organization_room(self, room_id):
         if room_id in self.rooms:
+            self.rooms[room_id].delete_room()
             del self.rooms[room_id]
-            self.get_room(room_id).delete_room()
         else:
             raise ValueError(f"No room found with ID {room_id}")
 
