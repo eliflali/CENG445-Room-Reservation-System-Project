@@ -1,8 +1,6 @@
 import uuid
 import hashlib
 import secrets
-
-
 import faker
 
 class SingletonMeta(type):
@@ -125,6 +123,27 @@ class Room(CRUD):
 
     def get_id(self):
         return self.id
+
+    def is_available(self, start_time, duration):
+        end_time = start_time + datetime.timedelta(minutes=duration)
+
+        if not self.is_working_hours(start_time, end_time):
+            return False
+        
+        for reservation in self.reservations:
+            reservation_start, reservation_end = reservation
+            # Check for overlap between reservations
+            if start_time < reservation_end and end_time > reservation_start:
+                return False  # Room is already reserved during this time
+
+        # If no conflicts were found, the room is available
+        return True
+
+    def is_working_hours(self, start_time, end_time):
+        # Check if the event's time interval falls within the room's working hours
+        return self.working_hours[0] <= start_time.time() <= self.working_hours[1] and \
+               self.working_hours[0] <= end_time.time() <= self.working_hours[1]
+    
     
 class Event(CRUD):
     def __init__(self, title, description, category, capacity, duration, weekly, permissions):
@@ -165,7 +184,9 @@ class Organization(CRUD):
     
     #map changed to mapOrganization since map is reserved word
     def __init__(self, owner, name, mapOrganization, backgroundImage = None):
-        super().__init__(name=name, mapOrganization=mapOrganization, backgroundImage=backgroundImage)
+        super().__init__(name=name, 
+                        mapOrganization=mapOrganization, 
+                        backgroundImage=backgroundImage)
         self.user_manager = owner #UserManager is singleton instance.
         self.owner = owner.get_current_user()
         self.rooms = {}
@@ -245,7 +266,14 @@ class Organization(CRUD):
         pass
 
     def find_room(self, event, rect, start, end):
-        pass
+        available_rooms = []
+
+        for room_id, room in self.rooms.items():
+            if room.is_available(start, end - start):
+                if room.capacity >= event.get_capacity():
+                    available_rooms.append(room)
+
+        return available_rooms
     
     def find_schedule(self, eventlist, rect, start, end):
         pass
