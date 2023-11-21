@@ -30,13 +30,16 @@ class Room:
         """
         return cls(name, x, y, capacity, working_hours, permissions)
 
-    def read_room(self, name):
+    def read_room(self):
         """
         Class method to read a Room's details.
-        :param name: String, the name of the room.
-        :return: Room object, the room with the specified name.
+        :return: attributes of room object in dictionary form.
         """
-        return self.name
+        return {"name": self.name, 
+                "coordinates": self.coordinates, 
+                "capacity": self.capacity,
+                "working_hours": self.working_hours,
+                "permissions": self.permissions}
 
     def update_room(self, **kwargs):
         """
@@ -93,13 +96,18 @@ class Event:
         """
         return cls(title, description, category, capacity, duration, weekly, permissions)
 
-    def read_event(self, title):
+    def read_event(self):
         """
         Class method to read an Event's details.
-        :param title: String, the title of the event.
-        :return: Event object, the event with the specified title.
+        :return: dictionary containing attributes of event object.
         """
-        return self.title
+        return {"title": self.title, 
+                "description": self.description,
+                "category": self.category,
+                "capacity": self.capacity,
+                "duration": self.duration,
+                "weekly": self.weekly,
+                "permissions": self.permissions}
     
     def update_event(self, **kwargs):
         """
@@ -127,16 +135,16 @@ class Event:
 event1 = Event.create_event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
 
 # Reading an event's details
-event_details = event1.read_event("Team Meeting")
+event_details = event1.read_event()
 print(event_details)
 
 # Updating an event's details
 event1.update_event(description="Bi-weekly team meeting")
-print(event1)
+print(event1.read_event())
 
 # Deleting an event
 event1.delete_event("Team Meeting")
-print(event1.read_event("Team Meeting"))  # This will return None
+print(event1.read_event())  # This will return None
 
 
 # Example Usage
@@ -144,7 +152,7 @@ print(event1.read_event("Team Meeting"))  # This will return None
 room1 = Room.create_room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
 
 # Reading a room's details
-room_details = room1.read_room("Conference Room")
+room_details = room1.read_room()
 print(room_details)
 
 # Updating a room's details
@@ -153,16 +161,29 @@ print(room1)
 
 # Deleting a room
 room1.delete_room("Conference Room")
-print(room1.read_room("Conference Room"))  # This will return None
+print(room1.read_room())  # This will return None
 
 
 class Organization:
     def __init__(self):
         self.rooms = {}
         self.events = {}
+        self.views = {}
+
+    @classmethod
+    def create_organization(cls):
+        return cls()
+
+    def read_organization(self):
+        return {"rooms": self.rooms, 
+                "events": self.events, 
+                "views": self.views}
 
     def add_room(self, room):
         self.rooms[room.name] = room
+
+    def get_room(self, roomName):
+        return rooms[roomName]
 
     def add_event(self, event):
         self.events[event.title] = event
