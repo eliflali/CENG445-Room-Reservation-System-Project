@@ -240,7 +240,15 @@ class Organization:
     
     #Update for room
     def update_organization_room(self, room_id, **kwargs):
-        return self.rooms[room_id].update_room(**kwargs)
+        if room_id in self.rooms:
+            return self.rooms[room_id].update_room(**kwargs)
+            """for key, value in kwargs.items():
+                if hasattr(self.rooms[room_id], key):
+                    setattr(self.rooms[room_id], key, value)
+                else:
+                    raise AttributeError(f"Attribute {key} not found in Room")"""
+        else:
+            raise ValueError(f"No room found with ID {room_id}")
 
     #Delete for room
     def delete_organization_room(self, room_id):
