@@ -1,6 +1,81 @@
 import uuid
+import hashlib
+
+class User:
+    """"User class for Authentication and Session Management"""
+    
+    def __init__(self, username, email, fullname, passwd):
+        self.id = str(uuid.uuid4())
+        self.username = username
+        self.email = email
+        self.fullname = fullname
+        self.password_hash = self._hash_password(passwd)
+        self.token = None
+        
+    def _hash_password(self, passwd):
+        return hashlib.sha256(passwd.encode()).hexdigest()
+    
+    def auth(self, plainpass):
+        return self.password_hash == self._hash_password(plainpass)
+    
+    def login(self):
+        self.token = str(uuid.uuid4())
+        return self.token
+    
+    def checksession(self,token):
+        return self.token == token
+    
+    def logout(self):
+        self.token = None
+        return True
+    
+    def get(self):
+        return {'id': self.id, 'username': self.username, 'email': self.email, 'fullname': self.fullname}
+    
+    def _repr_(self) -> str:
+        return f"<User {self.username}>"
+    
+    def update(self, **kwargs):
+        for key, value in kwargs.items():
+            if key == 'passwd':
+                value = self._hash_password(value)
+            setattr(self, key, value)
+            
+    def delete(self):
+        del self
+
+class SingletonMeta(type):
+    """
+    A Singleton metaclass that creates only one instance of a class.
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class UserManager(metaclass=SingletonMeta):
+    def __init__(self):
+        self.current_user = None
+        self.users = {}  # Dictionary to store user objects
+
+    def add_user(self, user):
+        self.users[user.id] = user
+
+    def switch_user(self, user_id):
+        if user_id in self.users:
+            self.current_user = self.users[user_id]
+        else:
+            raise ValueError("User ID not found")
+
+    def get_current_user(self):
+        return self.current_user
+
+
 class Room:
-    def __init__(self, name, x, y, capacity, working_hours, permissions):
+    def __init__(self, user, name, x, y, capacity, working_hours, permissions):
         """
         Constructor for creating a new Room object.
         :param name: String, the name of the room.
@@ -11,6 +86,7 @@ class Room:
         :param permissions: List, the list of permissions required to access the room.
         """
         self.id = uuid.uuid4()
+        self.user = user
         self.name = name
         self.coordinates = (x, y)
         self.capacity = capacity
@@ -18,24 +94,7 @@ class Room:
         self.permissions = permissions
         # Additional attributes like location can be added here
 
-    @classmethod
-    def create_room(cls, name, x, y, capacity, working_hours, permissions):
-        """
-        Class method to create a new Room.
-        :param name: String, the name of the room.
-        :param x: Float, the x-coordinate of the room's location.
-        :param y: Float, the y-coordinate of the room's location.
-        :param capacity: Integer, the capacity of the room.
-        :param working_hours: String, the working hours of the room.
-        :param permissions: List, the list of permissions required to access the room.
-        :return: Room object, the created room.
-        """
-        return cls(name, x, y, capacity, working_hours, permissions)
-
-    def get_permissions(self):
-        return self.permissions
-
-    def read_room(self):
+    def get_room(self):
         """
         Class method to read a Room's details.
         :return: attributes of room object in dictionary form.
@@ -56,12 +115,12 @@ class Room:
         return True
 
     def delete_room(self, name):
-            """
-            Class method to delete a Room.
-            :param name: String, the name of the room to delete.
-            """
-            del self
-            return True
+        """
+        Class method to delete a Room.
+        :param name: String, the name of the room to delete.
+        """
+        del self
+        return True
     
     def get_capacity(self):
         return self.capacity
@@ -72,10 +131,14 @@ class Room:
     def get_permissions(self):
         return self.permissions
 
+    def get_id(self):
+        return self.id
+
+
 
 
 class Event:
-    def __init__(self, title, description, category, capacity, duration, weekly, permissions):
+    def __init__(self, owner, title, description, category, capacity, duration, weekly, permissions):
         """
         Constructor for creating a new Event object.
         :param title: String, the title of the event.
@@ -87,6 +150,7 @@ class Event:
         :param permissions: List, the list of permissions required to attend the event.
         """
         self.id = uuid.uuid4()
+        self.owner = owner
         self.title = title
         self.description = description
         self.category = category
@@ -97,22 +161,7 @@ class Event:
         self.start_time = None
         self.location = None
 
-    @classmethod
-    def create_event(cls, title, description, category, capacity, duration, weekly, permissions):
-        """
-        Class method to create a new Event.
-        :param title: String, the title of the event.
-        :param description: String, the description of the event.
-        :param category: String, the category of the event.
-        :param capacity: Integer, the required capacity for the event.
-        :param duration: Integer, the duration of the event in minutes.
-        :param weekly: Boolean, True if the event occurs weekly, False otherwise.
-        :param permissions: List, the list of permissions required to attend the event.
-        :return: Event object, the created event.
-        """
-        return cls(title, description, category, capacity, duration, weekly, permissions)
-
-    def read_event(self):
+    def get_event(self):
         """
         Class method to read an Event's details.
         :return: dictionary containing attributes of event object.
@@ -157,12 +206,12 @@ class Event:
     def get_id(self):
         return self.id
 
-# Example Usage
+"""# Example Usage
 # Creating an event
-event1 = Event.create_event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
+#event1 = Event.create_event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
 
 # Reading an event's details
-event_details = event1.read_event()
+#event_details = event1.get_event()
 print(event_details)
 
 # Updating an event's details
@@ -189,13 +238,13 @@ print(room1)
 # Deleting a room
 room1.delete_room("Conference Room")
 print(room1.read_room())  # This will return None
-
+"""
 
 class Organization:
     #map changed to mapOrganization since map is reserved word
-    def __init__(self, owner, name, mapOrganization, backgroundImage = None):
+    def __init__(self, user_manager, name, mapOrganization, backgroundImage = None):
         self.id = uuid.uuid4()
-        self.owner = owner
+        self.owner = user_manager.get_current_user()
         self.name = name
         self.map = mapOrganization
         self.backgroundImage = backgroundImage
@@ -226,7 +275,10 @@ class Organization:
         del self
 
     def create_organization_room(self, name, x, y, capacity, working_hours, permissions):
-        new_room = Room(name, x, y, capacity, working_hours, permissions)
+        current_user = self.owner
+        if current_user is None:
+            raise Exception("No current user set in UserManager.")
+        new_room = Room(current_user, name, x, y, capacity, working_hours, permissions)
         id = new_room.get_id()
         self.rooms[id] = new_room
         return id
@@ -236,7 +288,7 @@ class Organization:
     
     #Read for room
     def read_organization_room(self, id):
-        return self.rooms[id].read_room()
+        return self.rooms[id].get_room()
     
     #Update for room
     def update_organization_room(self, room_id, **kwargs):
@@ -258,8 +310,15 @@ class Organization:
         else:
             raise ValueError(f"No room found with ID {room_id}")
 
-    def add_event(self, event):
-        self.events[event.title] = event
+    def create_organization_event(self, title, description, category, capacity, duration, weekly, permissions):
+        current_user = self.owner
+        if current_user is None:
+            raise Exception("No current user set in UserManager.")
+        new_event = Event(owner, title, description, category, capacity, duration, weekly, permissions)
+        id = new_event.get_id()
+        self.events[id] = new_event
+        #self.events[event.title] = event
+        return id
 
     def reserve(self, event_title, room_name, start_time):
         pass
@@ -278,16 +337,17 @@ class Organization:
 
     
 
-    
-
+user_manager = UserManager()
+user1 = User("Ahmed Muhsin", "Ahmed Muhsin", "Ahmed Muhsin Kirpi", "aslkd")
+user_manager.add_user(user1)
+user_manager.switch_user(user1.id) 
+print(user_manager.get_current_user().get())
 # Example usage
-org = Organization("Ahmed Muhsin", "Kirpi", "map")
-room = Room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
-event = Event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
+org = Organization(user_manager, "Kirpi", "map")
+#room = Room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
+#event = Event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
 #event1.update_event(description="Bi-weekly team meeting")
-org.add_room(room)
-org.add_event(event)
-org.read_organization_room(0)
-org.update_organization_room(0, name="zort")
+org.create_organization_room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
+org.create_organization_event(event)
 
 # Logic to reserve rooms, query events, etc., can be added following the project specifications
