@@ -103,7 +103,13 @@ class User(CRUD):
         
 class Room(CRUD):
     def __init__(self, user, name, x, y, capacity, working_hours, permissions):
-        super().__init__(user=user, name=name, x=x, y=y, capacity=capacity, working_hours=working_hours, permissions=permissions)
+        super().__init__(user=user, 
+                        name=name, 
+                        x=x, 
+                        y=y, 
+                        capacity=capacity, 
+                        working_hours=working_hours, 
+                        permissions=permissions)
 
     def get_permissions(self):
         return self.permissions
@@ -120,9 +126,20 @@ class Room(CRUD):
     def get_id(self):
         return self.id
     
-class Event:
+class Event(CRUD):
     def __init__(self, title, description, category, capacity, duration, weekly, permissions):
-        super().__init__(title=title, description=description, category=category, capacity=capacity, duration=duration, weekly=weekly, permissions=permissions)
+        super().__init__(title=title, 
+                        description=description, 
+                        category=category, 
+                        capacity=capacity, 
+                        duration=duration, 
+                        weekly=weekly, 
+                        permissions=permissions, 
+                        location = None, start_time = None)
+
+    def reserve_event(self, location, start_time):
+        self.location = location
+        self.start_time = start_time
     
     def get_permissions(self):
         return self.permissions
