@@ -240,7 +240,10 @@ class Organization:
     
     #Update for room
     def update_organization_room(self, room_id, **kwargs):
-        return self.rooms[room_id].update_room(**kwargs)
+        if room_id in self.rooms:
+            (self.get_room(room_id)).update_room(**kwargs)
+        else:
+            raise ValueError(f"No room found with ID {room_id}")
 
     #Delete for room
     def delete_organization_room(self, room_id):
@@ -250,8 +253,34 @@ class Organization:
         else:
             raise ValueError(f"No room found with ID {room_id}")
 
-    def add_event(self, event):
-        self.events[event.title] = event
+    def create_organization_event(self, title, description, category, capacity, duration, weekly, permissions):
+        new_event = Event(title, description, category, capacity, duration, weekly, permissions)
+        id = new_event.get_id()
+        self.events[id] = new_event
+        return id
+    
+    def get_event(self, event_id):
+        return self.events.get(event_id)
+    
+    #Read for event
+    def read_organization_event(self, id):
+        return self.events[id].read_event()
+    
+    #Update for event
+    def update_organization_event(self, event_id, **kwargs):
+        if event_id in self.events:
+            (self.get_event(event_id)).update_event(**kwargs)
+        else:
+            raise ValueError(f"No event found with ID {event_id}")
+    
+    #Delete for event
+    def delete_organization_event(self, event_id):
+        if event_id in self.events:
+            self.events[event_id].delete_event()
+            del self.events[event_id]
+        else:
+            raise ValueError(f"No event found with ID {event_id}")
+    
 
     def reserve(self, event_title, room_name, start_time):
         pass
@@ -283,3 +312,37 @@ org.read_organization_room(0)
 org.update_organization_room(0, name="zort")
 
 # Logic to reserve rooms, query events, etc., can be added following the project specifications
+
+
+
+
+class View:
+    def __init__(self, owner):
+        self.owner = owner
+        self.queries = {}
+
+    def addquery(self, organization, **kwargs):
+        query_id = uuid.uuid4()
+        self.queries[query_id] = {'organization': organization, 'params': kwargs}
+        return query_id
+    
+    def get_query(self, query_id):
+        return self.queries.get(query_id)
+
+    def delquery(self, query_id):
+        if query_id in self.queries:
+            del self.queries[query_id]
+        else:
+            raise KeyError("Query ID not found")
+
+    def roomView(self, start, end):
+        results = {}
+        # Here you would iterate over self.queries, execute them, and populate results
+        # Results could be a dictionary with room titles as keys
+        return results
+
+    def dayView(self, start, end):
+        results = {}
+        # Here you would iterate over self.queries, execute them, and populate results
+        # Results could be a dictionary with days as keys
+        return results
