@@ -152,7 +152,19 @@ class Room(CRUD):
     
 class Event:
     def __init__(self, title, description, category, capacity, duration, weekly, permissions):
-        super().__init__(title=title, description=description, category=category, capacity=capacity, duration=duration, weekly=weekly, permissions=permissions)
+        super().__init__(title=title, 
+                        description=description, 
+                        category=category, 
+                        capacity=capacity, 
+                        duration=duration, 
+                        weekly=weekly, 
+                        permissions=permissions
+                        location = None,
+                        start_time = None)
+
+    def reserved_event(self, location, start_time):
+        self.location = location
+        self.start_time = start_time
     
     def get_permissions(self):
         return self.permissions
