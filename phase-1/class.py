@@ -94,9 +94,6 @@ class Room:
         self.permissions = permissions
         # Additional attributes like location can be added here
 
-    def get_permissions(self):
-        return self.permissions
-
     def get_room(self):
         """
         Class method to read a Room's details.
@@ -141,7 +138,7 @@ class Room:
 
 
 class Event:
-    def __init__(self, title, description, category, capacity, duration, weekly, permissions):
+    def __init__(self, owner, title, description, category, capacity, duration, weekly, permissions):
         """
         Constructor for creating a new Event object.
         :param title: String, the title of the event.
@@ -153,6 +150,7 @@ class Event:
         :param permissions: List, the list of permissions required to attend the event.
         """
         self.id = uuid.uuid4()
+        self.owner = owner
         self.title = title
         self.description = description
         self.category = category
@@ -208,12 +206,12 @@ class Event:
     def get_id(self):
         return self.id
 
-# Example Usage
+"""# Example Usage
 # Creating an event
-event1 = Event.create_event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
+#event1 = Event.create_event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
 
 # Reading an event's details
-event_details = event1.get_event()
+#event_details = event1.get_event()
 print(event_details)
 
 # Updating an event's details
@@ -225,7 +223,7 @@ event1.delete_event("Team Meeting")
 print(event1.read_event())  # This will return None
 
 
-"""# Example Usage
+# Example Usage
 # Creating a room
 room1 = Room.create_room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
 
@@ -244,10 +242,9 @@ print(room1.read_room())  # This will return None
 
 class Organization:
     #map changed to mapOrganization since map is reserved word
-    def __init__(self, owner, name, mapOrganization, backgroundImage = None):
+    def __init__(self, user_manager, name, mapOrganization, backgroundImage = None):
         self.id = uuid.uuid4()
-        self.user_manager = owner #UserManager is singleton instance.
-        self.owner = owner.get_current_user()
+        self.owner = user_manager.get_current_user()
         self.name = name
         self.map = mapOrganization
         self.backgroundImage = backgroundImage
@@ -278,7 +275,7 @@ class Organization:
         del self
 
     def create_organization_room(self, name, x, y, capacity, working_hours, permissions):
-        current_user = self.user_manager.get_current_user()
+        current_user = self.owner
         if current_user is None:
             raise Exception("No current user set in UserManager.")
         new_room = Room(current_user, name, x, y, capacity, working_hours, permissions)
@@ -313,8 +310,15 @@ class Organization:
         else:
             raise ValueError(f"No room found with ID {room_id}")
 
-    def add_event(self, event):
-        self.events[event.title] = event
+    def create_organization_event(self, title, description, category, capacity, duration, weekly, permissions):
+        current_user = self.owner
+        if current_user is None:
+            raise Exception("No current user set in UserManager.")
+        new_event = Event(owner, title, description, category, capacity, duration, weekly, permissions)
+        id = new_event.get_id()
+        self.events[id] = new_event
+        #self.events[event.title] = event
+        return id
 
     def reserve(self, event_title, room_name, start_time):
         pass
@@ -341,9 +345,9 @@ print(user_manager.get_current_user().get())
 # Example usage
 org = Organization(user_manager, "Kirpi", "map")
 #room = Room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
-event = Event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
+#event = Event("Team Meeting", "Weekly team meeting", "Meeting", 10, 60, None, ["user"])
 #event1.update_event(description="Bi-weekly team meeting")
 org.create_organization_room("Conference Room", 0, 0, 10, "9AM-5PM", ["admin", "user"])
-org.add_event(event)
+org.create_organization_event(event)
 
 # Logic to reserve rooms, query events, etc., can be added following the project specifications
