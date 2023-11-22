@@ -1,8 +1,10 @@
 import datetime
+from datetime import datetime, timedelta
 import uuid
 import hashlib
 import secrets
 import faker
+
 
 class SingletonMeta(type):
     """
@@ -28,6 +30,8 @@ class UserManager(metaclass=SingletonMeta):
             print ("Current user set to: ", self.current_user.get())
 
     def switch_user(self, user_id):
+        print("line 31", user_id)
+        print(self.users)
         if user_id in self.users:
             self.current_user = self.users[user_id]
             print ("User switched to: ", self.current_user.get())
@@ -102,14 +106,17 @@ class User(CRUD):
         
 class Room(CRUD):
     def __init__(self, user, name, x, y, capacity, working_hours, permissions):
-        super().__init__(user=user, 
+        super().__init__(user=user,  
                         name=name, 
                         x=x, 
-                        y=y, 
+                        y=y,
                         capacity=capacity, 
                         working_hours=working_hours, 
                         permissions=permissions)
         self.reservations = []  
+
+    def get_name(self):
+        return self.name
 
     def get_permissions(self):
         return self.permissions
@@ -137,7 +144,21 @@ class Room(CRUD):
         return False
 
     def is_available(self, start_time, duration):
-        end_time = start_time + datetime.timedelta(minutes=duration)
+        print("start_time:", type(start_time))
+        #print("datetime.timedelta(minutes=duration):", type(datetime.timedelta(minutes=duration)))
+        duration_parts = duration.split(', ')
+        duration_delta = timedelta()
+
+        for part in duration_parts:
+            value, unit = part.split()
+            if "day" in unit:
+                duration_delta += timedelta(days=int(value))
+            elif "hour" in unit:
+                duration_delta += timedelta(hours=int(value))
+            elif "minute" in unit:
+                duration_delta += timedelta(minutes=int(value))
+
+        end_time = start_time + duration_delta
 
         if not self.is_working_hours(start_time, end_time):
             return False
@@ -152,11 +173,14 @@ class Room(CRUD):
         return True
 
     def is_working_hours(self, start_time, end_time):
+        workhours_start_time_str, workhours_end_time_str = self.working_hours.split('-')
+        workhours_start_time = datetime.strptime(workhours_start_time_str, "%H.%M").time()
+        workhours_end_time = datetime.strptime(workhours_end_time_str, "%H.%M").time()
         # Check if the event's time interval falls within the room's working hours
-        return self.working_hours[0] <= start_time.time() <= self.working_hours[1] and \
-               self.working_hours[0] <= end_time.time() <= self.working_hours[1]
+        return workhours_start_time <= start_time.time() <= workhours_end_time and \
+               workhours_start_time <= end_time.time() <= workhours_end_time
     
-class Event:
+class Event(CRUD):
     def __init__(self, title, description, category, capacity, duration, weekly, permissions):
         super().__init__(title=title, 
                         description=description, 
@@ -225,8 +249,8 @@ class Organization(CRUD):
         new_room = Room(current_user, name, x, y, capacity, working_hours, permissions)
         id = new_room.get_id()
         self.rooms[id] = new_room
-        self.objects[id] = f"room_{new_room.get()[name]}"
-        return id
+        self.objects[id] = f"room_{new_room.get_name}"
+        return new_room
 
     def get_room(self, room_id):
         return self.rooms.get(room_id)
@@ -256,8 +280,8 @@ class Organization(CRUD):
         new_event = Event(title, description, category, capacity, duration, weekly, permissions)
         id = new_event.get_id()
         self.events[id] = new_event
-        self.objects[id] = f"event_{new_event.get()[title]}"
-        return id
+        self.objects[id] = f"event_{new_event.title}"
+        return new_event
 
     def get_event(self, event_id):
         return self.events.get(event_id)
@@ -286,22 +310,39 @@ class Organization(CRUD):
         if event.room_id is not None:
             raise ValueError("Event is already assigned to a room.")
 
-        if("WRITE" not in event.get_permissions() 
+        if(("WRITE" not in event.get_permissions() 
             or 
-            "WRITE" not in room.get_permissions()):
+            "WRITE" not in room.get_permissions()) 
+            and
+            ("all" not in event.get_permissions()
+            or
+            "all" not in room.get_permissions())
+            ):
             raise ValueError("User does not have permission.")
         
         if(type(event.weekly) is datetime 
             and 
-            "PERWRITE" not in room.get_permissions()):
+            ("PERWRITE" not in room.get_permissions() or "all" not in room.get_permissions())):
             raise ValueError("User does not have permission for weekly events.")
 
 
         # Assign the room to the event and update its start time
-        event.reserved_event(room_id, start_time)
+        event.reserved_event(room.get_id, start_time)
 
         # Add the reservation to the room's reservations list
-        room.reservations.append((start_time, start_time + datetime.timedelta(minutes=event.get_duration())))
+        duration_parts = event.get_duration().split(', ')
+        duration_delta = timedelta()
+
+        for part in duration_parts:
+            value, unit = part.split()
+            if "day" in unit:
+                duration_delta += timedelta(days=int(value))
+            elif "hour" in unit:
+                duration_delta += timedelta(hours=int(value))
+            elif "minute" in unit:
+                duration_delta += timedelta(minutes=int(value))
+
+        room.reservations.append((start_time, start_time + duration_delta))
 
         # Return a success message or reservation details
         return f"Room {room.name} reserved for event {event.title} starting at {start_time}."
@@ -339,7 +380,7 @@ class Organization(CRUD):
             raise ValueError("User does not have permission for weekly events.")
 
         # Assign the room to the event and update its start time
-        event.reserved_event(room_id, start_time)
+        event.reserved_event(room.get_id, start_time)
 
         # Add the reservation to the room's reservations list
         room.reservations.append((start_time, start_time + datetime.timedelta(minutes=event.get_duration())))
@@ -357,9 +398,26 @@ def create_fake_data():
     user2 = User(username="user2", email=fake.email(), fullname=fake.name(), passwd="123")
     user3 = User(username="user3", email=fake.email(), fullname=fake.name(), passwd="123")
 
-    org1 = Organization(user1, name="org1", mapOrganization="map1")
+    user_manager.switch_user(user1.get_id())
+    
+    org1 = Organization(user_manager, name="org1", mapOrganization="map1")
 
-    org1.create_organization_room(name="room1", x=1, y=1, capacity=10, working_hours="9-5", permissions="all")
-    org1.create_organization_room(name="room2", x=2, y=2, capacity=20, working_hours="9-5", permissions="all")
-    org1.create_organization_event(title="event1", description="desc1", category="cat1", capacity=10, duration=2, weekly=True, permissions="all")   
-    org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=2, weekly=True, permissions="all")
+    time_str1 = "12-03-2023,15:30"
+    time1 = datetime.strptime(time_str1, "%d-%m-%Y,%H:%M")
+
+    duration = "15 minutes"
+
+    room1 = org1.create_organization_room(name="room1", x=1, y=1, capacity=10, working_hours="09.00-17.00", permissions="all")
+    room2 = org1.create_organization_room(name="room2", x=2, y=2, capacity=20, working_hours="9-5", permissions="all")
+    event1 = org1.create_organization_event(title="event1", description="desc1", category="cat1", capacity=10, duration=duration, weekly=True, permissions="all")   
+    event2 = org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=2, weekly=True, permissions="all")
+
+    org1.reserve(event1, room1, time1)
+
+def test_organization():
+    create_fake_data()
+    
+test_organization()
+
+
+
