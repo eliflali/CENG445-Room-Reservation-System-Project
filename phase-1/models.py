@@ -6,6 +6,7 @@ import secrets
 import faker
 
 
+
 class SingletonMeta(type):
     """
     A Singleton metaclass that creates only one instance of a class.
@@ -146,18 +147,20 @@ class Room(CRUD):
     def is_available(self, start_time, duration):
         print("start_time:", type(start_time))
         #print("datetime.timedelta(minutes=duration):", type(datetime.timedelta(minutes=duration)))
-        duration_parts = duration.split(', ')
-        duration_delta = timedelta()
+        if(type(duration) is str):
+            duration_parts = duration.split(', ')
+            duration_delta = timedelta()
 
-        for part in duration_parts:
-            value, unit = part.split()
-            if "day" in unit:
-                duration_delta += timedelta(days=int(value))
-            elif "hour" in unit:
-                duration_delta += timedelta(hours=int(value))
-            elif "minute" in unit:
-                duration_delta += timedelta(minutes=int(value))
-
+            for part in duration_parts:
+                value, unit = part.split()
+                if "day" in unit:
+                    duration_delta += timedelta(days=int(value))
+                elif "hour" in unit:
+                    duration_delta += timedelta(hours=int(value))
+                elif "minute" in unit:
+                    duration_delta += timedelta(minutes=int(value))
+        else:
+            duration_delta = duration
         end_time = start_time + duration_delta
 
         if not self.is_working_hours(start_time, end_time):
@@ -170,6 +173,7 @@ class Room(CRUD):
                 return False  # Room is already reserved during this time
 
         # If no conflicts were found, the room is available
+        print("line 174")
         return True
 
     def is_working_hours(self, start_time, end_time):
@@ -401,17 +405,23 @@ def create_fake_data():
     user_manager.switch_user(user1.get_id())
     
     org1 = Organization(user_manager, name="org1", mapOrganization="map1")
-
+    time_str0 = "01-01-2023,15:30"
     time_str1 = "12-03-2023,15:30"
     time1 = datetime.strptime(time_str1, "%d-%m-%Y,%H:%M")
+    time0 = datetime.strptime(time_str0, "%d-%m-%Y,%H:%M")
 
     duration = "15 minutes"
 
     room1 = org1.create_organization_room(name="room1", x=1, y=1, capacity=10, working_hours="09.00-17.00", permissions="all")
-    room2 = org1.create_organization_room(name="room2", x=2, y=2, capacity=20, working_hours="9-5", permissions="all")
+    room2 = org1.create_organization_room(name="room2", x=2, y=2, capacity=20, working_hours="09.00-17.00", permissions="all")
     event1 = org1.create_organization_event(title="event1", description="desc1", category="cat1", capacity=10, duration=duration, weekly=True, permissions="all")   
     event2 = org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=2, weekly=True, permissions="all")
 
+    #rect is defined as (x,y,w,h) 
+    #rect[0] = x - min x, rect[1] = y - max y, rect[2] = w - max x, rect[3] = h - min y
+    #x y are the coordinates of the bottom left corner. 
+    #Top right corner will be x+w,y+h
+    print(org1.find_room(event1, (0,100,100,0), time0, time1))
     org1.reserve(event1, room1, time1)
 
 def test_organization():
