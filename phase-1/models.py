@@ -454,17 +454,41 @@ class Organization(CRUD):
 
         # Check if the room's coordinates are within the rect bounds
         return (rect_x <= room_x <= rect_x_max) and (rect_y <= room_y <= rect_y_max)
-
     def query(self, rect, title, category, room):
+            for key, event in self.events.items():
+                # If a specific room is specified, skip events that are not in this room
+                if room and event.room_id != room.id:
+                    continue
+
+                # Retrieve the associated room object for the event
+                associated_room = next((r for r in self.rooms if r.id == event.room_id), None)
+
+                # If rect is specified, use the _is_in_rect method to check if the room is within the rect
+                if rect and not self._is_in_rect(associated_room, rect):
+                    continue
+
+                # Check if the event's title contains the title substring
+                if title and title.lower() not in event.title.lower():
+                    continue
+
+                # Check if the event's category matches the category substring
+                if category and category.lower() not in event.category.lower():
+                    continue
+
+                # If all conditions are met, yield a tuple with the event details
+                yield (event, associated_room, event.start_time)
+    """def query(self, rect, title, category, room):
         # Assuming self.events is a list of event objects
         # and each event object has 'title', 'category', 'associated_room', and 'start' attributes
-        for event in self.events:
+        for key, event in self.events.items():
+            print(self.events)
             # If a specific room is specified, skip events that are not in this room
-            if room and event.associated_room != room:
+            #print(f"Checking event: {event.title}, Room: {event.room.name}, Start: {event.start}")
+            if room and self.rooms[event.room_id] != room:
                 continue
 
             # If rect is specified, use the _is_in_rect method to check if the room is within the rect
-            if rect and not self._is_in_rect(event.associated_room, rect):
+            if rect and not self._is_in_rect(self.rooms[event.room_id], rect):
                 continue
 
             # Check if the event's title contains the title substring
@@ -476,7 +500,8 @@ class Organization(CRUD):
                 continue
 
             # If all conditions are met, yield a tuple with the event details
-            yield (event, event.associated_room, event.start)
+            yield (event, event.room_id, event.start_time)
+        """
 
 class View:
     def __init__(self, owner):
@@ -512,8 +537,11 @@ class View:
         day_based_results = {}
         current_day = start
         while current_day <= end:
+            print(current_day)
+            print(end)
             day_based_results[current_day] = []
             for query_id, query_info in self.queries.items():
+                print("been")
                 matches = query_info['organization'].query(**query_info['params'])
                 for event, room, event_start in matches:
                     if event_start.date() == current_day.date():
@@ -531,33 +559,44 @@ def create_fake_data():
     user_manager.switch_user(user1.get_id())
     
     org1 = Organization(user_manager, name="org1", mapOrganization="map1")
-    time_str0 = "01-01-2023,15:30"
-    time_str1 = "12-03-2023,15:30"
+    time_str0 = "10-01-2023,10:01"
+    time_str1 = "10-01-2023,10:01"
     time1 = datetime.strptime(time_str1, "%d-%m-%Y,%H:%M")
     time0 = datetime.strptime(time_str0, "%d-%m-%Y,%H:%M")
 
+    start = "01-01-2023,00:00"
+    end = "31-01-2023,00:00"
+
+    start_datetime = datetime.strptime(start, "%d-%m-%Y,%H:%M")
+    end_datetime = datetime.strptime(end, "%d-%m-%Y,%H:%M")
+
     duration = "15 minutes"
 
-    room1 = org1.create_organization_room(name="room1", x=1, y=1, capacity=10, working_hours="09.00-17.00", permissions="all")
-    room2 = org1.create_organization_room(name="room2", x=2, y=2, capacity=20, working_hours="09.00-17.00", permissions="all")
+    room1 = org1.create_organization_room(name="room1", x=1, y=1, capacity=1000000, working_hours="09.00-17.00", permissions="all")
+    room2 = org1.create_organization_room(name="room2", x=2, y=2, capacity=200000, working_hours="09.00-17.00", permissions="all")
     event1 = org1.create_organization_event(title="event1", description="desc1", category="cat1", capacity=10, duration=duration, weekly=True, permissions="all")   
     event2 = org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=duration, weekly=True, permissions="all")
 
-    org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=2, weekly=True, permissions="all")
+    event3 = org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=duration, weekly=True, permissions="all")
     view = View(user1)
-    room_view = view.roomView(start=datetime(2023,1,1), end=datetime(2023, 1, 31))
-    day_view = view.dayView(start=datetime(2023, 1, 1), end=datetime(2023, 1, 31))
-    print(day_view)
-    print(room_view)
+    #room_view = view.roomView(start=datetime(2023,1,1), end=datetime(2023, 1, 31))
+    #day_view = view.dayView(start=datetime(2023, 1, 1), end=datetime(2023, 1, 31))
+    view.addquery(org1, rect = (0,100000,100000,0), title = "event2", category = "cat2", room = room2)
+    print(org1.reserve(event1, room1, time1))
+    print(org1.reserve(event2, room2, time1))
+    room_view = view.roomView(start_datetime, end_datetime)
+    day_view = view.dayView(start_datetime, end_datetime)
 
+    print(room_view)
+    print(day_view)
     #rect is defined as (x,y,w,h) 
     #rect[0] = x - min x, rect[1] = y - max y, rect[2] = w - max x, rect[3] = h - min y
     #x y are the coordinates of the bottom left corner. 
     #Top right corner will be x+w,y+h
-    print("line 427", org1.find_room(event1, (0,100,100,0), time0, time1))
-    print(org1.reserve(event1, room1, time1))
-    print(org1.reassign(event1, room2, time1))
-    print(org1.find_schedule([event1, event2], (0,100,100,0), time0, time1))
+    #print("line 427", org1.find_room(event1, (0,100,100,0), time0, time1))
+    #print(org1.reserve(event1, room1, time1))
+    #print(org1.reassign(event1, room2, time1))
+    #print(org1.find_schedule([event1, event2], (0,100,100,0), time0, time1))
 
 def test_organization():
     create_fake_data()
