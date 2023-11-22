@@ -164,12 +164,12 @@ class Event:
                         capacity=capacity, 
                         duration=duration, 
                         weekly=weekly, 
-                        permissions=permissions
-                        location = None,
+                        permissions=permissions,
+                        room_id = None,
                         start_time = None)
 
-    def reserved_event(self, location, start_time):
-        self.location = location
+    def reserved_event(self, room_id, start_time):
+        self.room_id = room_id
         self.start_time = start_time
     
     def get_permissions(self):
@@ -204,7 +204,7 @@ class Organization(CRUD):
         self.rooms = {}
         self.events = {}
 
-     @classmethod
+    @classmethod
     def listobjects(cls):
         # List all objects of this class
         return cls.objects
@@ -277,8 +277,9 @@ class Organization(CRUD):
             raise ValueError(f"No event found with ID {event_id}")
 
     #taslak - no permissions included
-    def reserve(self, event_title, room_id, start_time):
-        event = self.events.get(event_title)
+    def reserve(self, event_id, room_id, start_time):
+        #those may be unneeded (event and room declarations)
+        event = self.events.get(event_id)
         room = self.rooms.get(room_id)
 
         if event is None or room is None:
@@ -292,14 +293,24 @@ class Organization(CRUD):
         if event.room_id is not None:
             raise ValueError("Event is already assigned to a room.")
 
+        if("WRITE" not in event.get_permissions() 
+            or 
+            "WRITE" not in room.get_permissions()):
+            raise ValueError("User does not have permission.")
+        
+        if(type(room.weekly) is datetime 
+            and 
+            "PERWRITE" not in room.get_permissions()):
+            raise ValueError("User does not have permission for weekly events.")
+
+
         # Assign the room to the event and update its start time
-        event.room_id = room_id
-        event.start_time = start_time
+        event.reserved_event(room_id, start_time)
 
         # Add the reservation to the room's reservations list
         room.reservations.append((start_time, start_time + datetime.timedelta(minutes=event.get_duration())))
 
-        # You may want to perform additional actions or logging here
+
 
         # Return a success message or reservation details
         return f"Room {room.name} reserved for event {event.title} starting at {start_time}."
