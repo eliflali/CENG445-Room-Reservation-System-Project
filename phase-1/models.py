@@ -359,8 +359,11 @@ class Organization(CRUD):
 
         for room_id, room in self.rooms.items():
             if room.is_in_rectangle(rect):
+                print("inrectangle")
                 if room.is_available(start, end - start):
+                    "available"
                     if room.capacity >= event.get_capacity():
+                        "capacity ok"
                         available_rooms.append(room)
 
         return available_rooms
@@ -368,26 +371,43 @@ class Organization(CRUD):
     def find_schedule(self, eventlist, rect, start, end):
         pass
 
-    def reassign(self, event, room):
+    def reassign(self, event, room, start_time):
         # Check if the room is available for the specified time
         if not room.is_available(start_time, event.get_duration()):
             raise ValueError("Room is not available for the specified time.")
 
-        if("WRITE" not in event.get_permissions() 
+        if(("WRITE" not in event.get_permissions() 
             or 
-            "WRITE" not in room.get_permissions()):
+            "WRITE" not in room.get_permissions()) 
+            and
+            ("all" not in event.get_permissions()
+            or
+            "all" not in room.get_permissions())
+            ):
             raise ValueError("User does not have permission.")
         
         if(type(event.weekly) is datetime 
             and 
-            "PERWRITE" not in room.get_permissions()):
+            ("PERWRITE" not in room.get_permissions() or "all" not in room.get_permissions())):
             raise ValueError("User does not have permission for weekly events.")
 
         # Assign the room to the event and update its start time
         event.reserved_event(room.get_id, start_time)
+        
+        duration_parts = event.get_duration().split(', ')
+        duration_delta = timedelta()
 
-        # Add the reservation to the room's reservations list
-        room.reservations.append((start_time, start_time + datetime.timedelta(minutes=event.get_duration())))
+        for part in duration_parts:
+            value, unit = part.split()
+            if "day" in unit:
+                duration_delta += timedelta(days=int(value))
+            elif "hour" in unit:
+                duration_delta += timedelta(hours=int(value))
+            elif "minute" in unit:
+                duration_delta += timedelta(minutes=int(value))
+
+        room.reservations.append((start_time, start_time + duration_delta))
+
 
         # Return a success message or reservation details
         return f"Room {room.name} reserved(reassigned) for event {event.title} starting at {start_time}."
@@ -421,8 +441,9 @@ def create_fake_data():
     #rect[0] = x - min x, rect[1] = y - max y, rect[2] = w - max x, rect[3] = h - min y
     #x y are the coordinates of the bottom left corner. 
     #Top right corner will be x+w,y+h
-    print(org1.find_room(event1, (0,100,100,0), time0, time1))
-    org1.reserve(event1, room1, time1)
+    print("line 427", org1.find_room(event1, (0,100,100,0), time0, time1))
+    print(org1.reserve(event1, room1, time1))
+    print(org1.reassign(event1, room2, time1))
 
 def test_organization():
     create_fake_data()
