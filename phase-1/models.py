@@ -444,9 +444,82 @@ class Organization(CRUD):
 
         # Return a success message or reservation details
         return f"Room {room.name} reserved(reassigned) for event {event.title} starting at {start_time}."
-    
-    def query(rect, title, category, room):
-        pass
+    def _is_in_rect(self, room, rect):
+        rect_x, rect_y, rect_w, rect_h = rect
+        room_x, room_y = room.x, room.y
+
+        # Calculate the top right coordinates of the rect
+        rect_x_max = rect_x + rect_w
+        rect_y_max = rect_y + rect_h
+
+        # Check if the room's coordinates are within the rect bounds
+        return (rect_x <= room_x <= rect_x_max) and (rect_y <= room_y <= rect_y_max)
+
+    def query(self, rect, title, category, room):
+        # Assuming self.events is a list of event objects
+        # and each event object has 'title', 'category', 'associated_room', and 'start' attributes
+        for event in self.events:
+            # If a specific room is specified, skip events that are not in this room
+            if room and event.associated_room != room:
+                continue
+
+            # If rect is specified, use the _is_in_rect method to check if the room is within the rect
+            if rect and not self._is_in_rect(event.associated_room, rect):
+                continue
+
+            # Check if the event's title contains the title substring
+            if title and title.lower() not in event.title.lower():
+                continue
+
+            # Check if the event's category matches the category substring
+            if category and category.lower() not in event.category.lower():
+                continue
+
+            # If all conditions are met, yield a tuple with the event details
+            yield (event, event.associated_room, event.start)
+
+class View:
+    def __init__(self, owner):
+        self.owner = owner
+        self.queries = {}
+        self.next_query_id = 1
+
+    def addquery(self, organization, **kwargs):
+        query_id = self.next_query_id
+        self.queries[query_id] = {'organization': organization, 'params': kwargs}
+        self.next_query_id += 1
+        return query_id
+
+    def delquery(self, query_id):
+        if query_id in self.queries:
+            del self.queries[query_id]
+        else:
+            raise ValueError("Query ID not found")
+
+    def roomView(self, start, end):
+        room_based_results = {}
+        for query_id, query_info in self.queries.items():
+            matches = query_info['organization'].query(**query_info['params'])
+            for event, room, event_start in matches:
+                if start <= event_start <= end:
+                    if room not in room_based_results:
+                        room_based_results[room] = []
+                    room_based_results[room].append((event, event_start))
+        return room_based_results
+
+
+    def dayView(self, start, end):
+        day_based_results = {}
+        current_day = start
+        while current_day <= end:
+            day_based_results[current_day] = []
+            for query_id, query_info in self.queries.items():
+                matches = query_info['organization'].query(**query_info['params'])
+                for event, room, event_start in matches:
+                    if event_start.date() == current_day.date():
+                        day_based_results[current_day].append((event, room, event_start))
+            current_day += datetime.timedelta(days=1)
+        return {date: events for date, events in day_based_results.items() if events} 
 
 def create_fake_data():
     fake = faker.Faker()
@@ -469,6 +542,11 @@ def create_fake_data():
     room2 = org1.create_organization_room(name="room2", x=2, y=2, capacity=20, working_hours="09.00-17.00", permissions="all")
     event1 = org1.create_organization_event(title="event1", description="desc1", category="cat1", capacity=10, duration=duration, weekly=True, permissions="all")   
     event2 = org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=duration, weekly=True, permissions="all")
+
+    org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=2, weekly=True, permissions="all")
+    view = View(user1)
+    room_view = view.roomView(start=datetime(2023,1,1), end=datetime(2023, 1, 31))
+    day_view = view.dayView(start=datetime(2023, 1, 1), end=datetime(2023, 1, 31))
 
     #rect is defined as (x,y,w,h) 
     #rect[0] = x - min x, rect[1] = y - max y, rect[2] = w - max x, rect[3] = h - min y
