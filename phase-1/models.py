@@ -518,7 +518,7 @@ class View:
                 for event, room, event_start in matches:
                     if event_start.date() == current_day.date():
                         day_based_results[current_day].append((event, room, event_start))
-            current_day += datetime.timedelta(days=1)
+            current_day += timedelta(days=1)
         return {date: events for date, events in day_based_results.items() if events} 
 
 def create_fake_data():
@@ -536,6 +536,12 @@ def create_fake_data():
     time1 = datetime.strptime(time_str1, "%d-%m-%Y,%H:%M")
     time0 = datetime.strptime(time_str0, "%d-%m-%Y,%H:%M")
 
+    start = "01-01-2023,00:00"
+    end = "31-01-2023,00:00"
+
+    start_datetime = datetime.strptime(start, "%d-%m-%Y,%H:%M")
+    end_datetime = datetime.strptime(end, "%d-%m-%Y,%H:%M")
+
     duration = "15 minutes"
 
     room1 = org1.create_organization_room(name="room1", x=1, y=1, capacity=10, working_hours="09.00-17.00", permissions="all")
@@ -545,17 +551,22 @@ def create_fake_data():
 
     org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=2, weekly=True, permissions="all")
     view = View(user1)
-    room_view = view.roomView(start=datetime(2023,1,1), end=datetime(2023, 1, 31))
-    day_view = view.dayView(start=datetime(2023, 1, 1), end=datetime(2023, 1, 31))
+    #room_view = view.roomView(start=datetime(2023,1,1), end=datetime(2023, 1, 31))
+    #day_view = view.dayView(start=datetime(2023, 1, 1), end=datetime(2023, 1, 31))
 
+    room_view = view.roomView(start_datetime, end_datetime)
+    day_view = view.dayView(start_datetime, end_datetime)
+
+    print(room_view)
+    print(day_view)
     #rect is defined as (x,y,w,h) 
     #rect[0] = x - min x, rect[1] = y - max y, rect[2] = w - max x, rect[3] = h - min y
     #x y are the coordinates of the bottom left corner. 
     #Top right corner will be x+w,y+h
-    print("line 427", org1.find_room(event1, (0,100,100,0), time0, time1))
-    print(org1.reserve(event1, room1, time1))
-    print(org1.reassign(event1, room2, time1))
-    print(org1.find_schedule([event1, event2], (0,100,100,0), time0, time1))
+    #print("line 427", org1.find_room(event1, (0,100,100,0), time0, time1))
+    #print(org1.reserve(event1, room1, time1))
+    #print(org1.reassign(event1, room2, time1))
+    #print(org1.find_schedule([event1, event2], (0,100,100,0), time0, time1))
 
 def test_organization():
     create_fake_data()
