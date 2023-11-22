@@ -369,7 +369,40 @@ class Organization(CRUD):
         return available_rooms
     
     def find_schedule(self, eventlist, rect, start, end):
-        pass
+        schedule = {}
+        for event in eventlist:
+            available_rooms = self.find_room(event, rect, start, end)
+
+            for room in available_rooms:
+                current_time = start
+                while current_time < end:
+                    # Calculate event end time
+                    duration_parts = event.get_duration().split(', ')
+                    duration_delta = timedelta()
+                    for part in duration_parts:
+                        value, unit = part.split()
+                        if "day" in unit:
+                            duration_delta += timedelta(days=int(value))
+                        elif "hour" in unit:
+                            duration_delta += timedelta(hours=int(value))
+                        elif "minute" in unit:
+                            duration_delta += timedelta(minutes=int(value))
+
+                    event_end_time = current_time + duration_delta
+
+                    # Check if the room is available for the event duration
+                    if room.is_available(current_time, event_end_time - current_time):
+                        # Schedule the event
+                        schedule[event.id] = {'room_id': room.id, 'start_time': current_time}
+                        break
+
+                    # Increment current time
+                    current_time += timedelta(minutes=15)  # Adjust the time increment as needed
+
+                if event.id not in schedule:
+                    return None  # Unable to schedule one of the events
+
+        return schedule
 
     def reassign(self, event, room, start_time):
         # Check if the room is available for the specified time
@@ -393,7 +426,7 @@ class Organization(CRUD):
 
         # Assign the room to the event and update its start time
         event.reserved_event(room.get_id, start_time)
-        
+
         duration_parts = event.get_duration().split(', ')
         duration_delta = timedelta()
 
@@ -435,7 +468,7 @@ def create_fake_data():
     room1 = org1.create_organization_room(name="room1", x=1, y=1, capacity=10, working_hours="09.00-17.00", permissions="all")
     room2 = org1.create_organization_room(name="room2", x=2, y=2, capacity=20, working_hours="09.00-17.00", permissions="all")
     event1 = org1.create_organization_event(title="event1", description="desc1", category="cat1", capacity=10, duration=duration, weekly=True, permissions="all")   
-    event2 = org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=2, weekly=True, permissions="all")
+    event2 = org1.create_organization_event(title="event2", description="desc2", category="cat2", capacity=20, duration=duration, weekly=True, permissions="all")
 
     #rect is defined as (x,y,w,h) 
     #rect[0] = x - min x, rect[1] = y - max y, rect[2] = w - max x, rect[3] = h - min y
@@ -444,6 +477,7 @@ def create_fake_data():
     print("line 427", org1.find_room(event1, (0,100,100,0), time0, time1))
     print(org1.reserve(event1, room1, time1))
     print(org1.reassign(event1, room2, time1))
+    print(org1.find_schedule([event1, event2], (0,100,100,0), time0, time1))
 
 def test_organization():
     create_fake_data()
