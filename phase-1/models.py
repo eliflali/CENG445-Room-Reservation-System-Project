@@ -518,7 +518,7 @@ class View:
                 for event, room, event_start in matches:
                     if event_start.date() == current_day.date():
                         day_based_results[current_day].append((event, room, event_start))
-            current_day += datetime.timedelta(days=1)
+            current_day += timedelta(days=1)
         return {date: events for date, events in day_based_results.items() if events} 
 
 def create_fake_data():
@@ -547,6 +547,8 @@ def create_fake_data():
     view = View(user1)
     room_view = view.roomView(start=datetime(2023,1,1), end=datetime(2023, 1, 31))
     day_view = view.dayView(start=datetime(2023, 1, 1), end=datetime(2023, 1, 31))
+    print(day_view)
+    print(room_view)
 
     #rect is defined as (x,y,w,h) 
     #rect[0] = x - min x, rect[1] = y - max y, rect[2] = w - max x, rect[3] = h - min y
