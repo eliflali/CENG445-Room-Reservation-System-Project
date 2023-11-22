@@ -126,6 +126,16 @@ class Room(CRUD):
     def get_id(self):
         return self.id
 
+    def is_in_rectangle(self, rect):
+        #rect is defined as (x,y,w,h) 
+        #rect[0] = x - min x, rect[1] = y - max y, rect[2] = w - max x, rect[3] = h - min y
+        #x y are the coordinates of the bottom left corner. 
+        #Top right corner will be x+w,y+h
+        if(self.x > rect[0] and self.x < rect[2] and self.y > rect[3] and self.y < rect[1]):
+            return True
+        
+        return False
+
     def is_available(self, start_time, duration):
         end_time = start_time + datetime.timedelta(minutes=duration)
 
@@ -266,7 +276,7 @@ class Organization(CRUD):
         else:
             raise ValueError(f"No event found with ID {event_id}")
 
-    #taslak
+    #taslak - no permissions included
     def reserve(self, event_title, room_id, start_time):
         event = self.events.get(event_title)
         room = self.rooms.get(room_id)
@@ -294,13 +304,17 @@ class Organization(CRUD):
         # Return a success message or reservation details
         return f"Room {room.name} reserved for event {event.title} starting at {start_time}."
 
+    #rect is defined as (x,y,w,h) 
+    #x y are the coordinates of the bottom left corner. 
+    #Top right corner will be x+w,y+h
     def find_room(self, event, rect, start, end):
         available_rooms = []
 
         for room_id, room in self.rooms.items():
-            if room.is_available(start, end - start):
-                if room.capacity >= event.get_capacity():
-                    available_rooms.append(room)
+            if room.is_in_rectangle(rect):
+                if room.is_available(start, end - start):
+                    if room.capacity >= event.get_capacity():
+                        available_rooms.append(room)
 
         return available_rooms
     
