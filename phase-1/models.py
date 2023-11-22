@@ -277,14 +277,7 @@ class Organization(CRUD):
             raise ValueError(f"No event found with ID {event_id}")
 
     #taslak - no permissions included
-    def reserve(self, event_id, room_id, start_time):
-        #those may be unneeded (event and room declarations)
-        event = self.events.get(event_id)
-        room = self.rooms.get(room_id)
-
-        if event is None or room is None:
-            raise ValueError("Event or room not found.")
-
+    def reserve(self, event, room, start_time):
         # Check if the room is available for the specified time
         if not room.is_available(start_time, event.get_duration()):
             raise ValueError("Room is not available for the specified time.")
@@ -298,7 +291,7 @@ class Organization(CRUD):
             "WRITE" not in room.get_permissions()):
             raise ValueError("User does not have permission.")
         
-        if(type(room.weekly) is datetime 
+        if(type(event.weekly) is datetime 
             and 
             "PERWRITE" not in room.get_permissions()):
             raise ValueError("User does not have permission for weekly events.")
@@ -309,8 +302,6 @@ class Organization(CRUD):
 
         # Add the reservation to the room's reservations list
         room.reservations.append((start_time, start_time + datetime.timedelta(minutes=event.get_duration())))
-
-
 
         # Return a success message or reservation details
         return f"Room {room.name} reserved for event {event.title} starting at {start_time}."
@@ -332,8 +323,29 @@ class Organization(CRUD):
     def find_schedule(self, eventlist, rect, start, end):
         pass
 
-    def reassign(event, room):
-        pass
+    def reassign(self, event, room):
+        # Check if the room is available for the specified time
+        if not room.is_available(start_time, event.get_duration()):
+            raise ValueError("Room is not available for the specified time.")
+
+        if("WRITE" not in event.get_permissions() 
+            or 
+            "WRITE" not in room.get_permissions()):
+            raise ValueError("User does not have permission.")
+        
+        if(type(event.weekly) is datetime 
+            and 
+            "PERWRITE" not in room.get_permissions()):
+            raise ValueError("User does not have permission for weekly events.")
+
+        # Assign the room to the event and update its start time
+        event.reserved_event(room_id, start_time)
+
+        # Add the reservation to the room's reservations list
+        room.reservations.append((start_time, start_time + datetime.timedelta(minutes=event.get_duration())))
+
+        # Return a success message or reservation details
+        return f"Room {room.name} reserved(reassigned) for event {event.title} starting at {start_time}."
     
     def query(rect, title, category, room):
         pass
