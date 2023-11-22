@@ -454,8 +454,8 @@ class Organization(CRUD):
 
         # Check if the room's coordinates are within the rect bounds
         return (rect_x <= room_x <= rect_x_max) and (rect_y <= room_y <= rect_y_max)
-    """def query(self, rect, title, category, room):
-            for event in self.events:
+    def query(self, rect, title, category, room):
+            for key, event in self.events.items():
                 # If a specific room is specified, skip events that are not in this room
                 if room and event.room_id != room.id:
                     continue
@@ -476,11 +476,11 @@ class Organization(CRUD):
                     continue
 
                 # If all conditions are met, yield a tuple with the event details
-                yield (event, associated_room, event.start_time)"""
-    def query(self, rect, title, category, room):
+                yield (event, associated_room, event.start_time)
+    """def query(self, rect, title, category, room):
         # Assuming self.events is a list of event objects
         # and each event object has 'title', 'category', 'associated_room', and 'start' attributes
-        for event in self.events:
+        for key, event in self.events.items():
             print(self.events)
             # If a specific room is specified, skip events that are not in this room
             #print(f"Checking event: {event.title}, Room: {event.room.name}, Start: {event.start}")
@@ -501,7 +501,7 @@ class Organization(CRUD):
 
             # If all conditions are met, yield a tuple with the event details
             yield (event, event.room_id, event.start_time)
-        
+        """
 
 class View:
     def __init__(self, owner):
