@@ -1,56 +1,39 @@
 import hashlib
-import secrets
+import sqlite3
 
 
-class User():
-    all_users = []
-    
-    def __init__(self, username, email, fullname, passwd):
-        self.id = len(User.all_users)
-        self.username = username
-        self.email = email
-        self.fullname = fullname
-        self.password_hash = self._hash_password(passwd)
-        self.session_token = None
+def login(user,passwd):
+    with sqlite3.connect('room_reservation.sql3') as db:
+        c = db.cursor()
+        row = c.execute('SELECT * FROM users WHERE username=?',(user,))
+        row = c.fetchone()  # Fetch the first row of the result
         
-        User.all_users.append(self)
-        print(f"User {self.username} created")
+        if row is not None and hashlib.sha256(passwd.encode()).hexdigest() == row[1]:
+            return True
         
-
-    def _hash_password(self, passwd):
-        # Use hashlib or another library to hash the password
-        return hashlib.sha256(passwd.encode('utf-8')).hexdigest()
-
-    def auth(self, plainpass):
-        # Check if the supplied password matches the user password hash
-        return self.password_hash == self._hash_password(plainpass)
-
-    def login(self):
-        # Start a session for the user, return a random token to be used during the session
-        self.session_token = secrets.token_hex()
-        return self.session_token
-
-    def checksession(self, token):
-        # Check if the token is valid
-        return token == self.session_token
-
-    def logout(self):
-        # End the session invalidating the token
-        self.session_token = None  
+        return False
     
-    def get_id(self):
-        return self.id
+
+def adduser(user,passwd):
+    encpass = hashlib.sha256(passwd.encode()).hexdigest()
+    with sqlite3.connect('room_reservation.sql3') as db:
+        c = db.cursor()
+        c.execute('insert into users values (?,?)',(user,encpass))
 
 
 def login_required(f):
     """Decorator to check if the user is logged in before performing an action"""
-    def wrapper(user, *args, **kwargs):
-        if user.session_token is None:
+    def wrapper(username, password, *args, **kwargs):
+        if not login(username, password):
             raise Exception("User must be logged in to perform this action.")
-        return f(user, *args, **kwargs)
+        return f(username, password, *args, **kwargs)
     return wrapper
 
+
 @login_required
-def change_password(user, new_password):
-    user.password_hash = user._hash_password(new_password)
-    print(f"Password for {user.username} changed successfully.")
+def print_user(username, password):
+    print("test")
+
+
+print_user("admin", "admin") # will print "test"
+print_user("admin", "wrong_password") # will raise an exception
