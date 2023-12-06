@@ -438,16 +438,6 @@ class Organization(CRUD):
 
         # Return a success message or reservation details
         return f"Room {room.name} reserved(reassigned) for event {event.title} starting at {start_time}."
-    def _is_in_rect(self, room, rect):
-        rect_x, rect_y, rect_w, rect_h = rect
-        room_x, room_y = room.x, room.y
-
-        # Calculate the top right coordinates of the rect
-        rect_x_max = rect_x + rect_w
-        rect_y_max = rect_y + rect_h
-
-        # Check if the room's coordinates are within the rect bounds
-        return (rect_x <= room_x <= rect_x_max) and (rect_y <= room_y <= rect_y_max)
     
     def query(self, rect, title, category, room):
         matches = []  # List to hold all matches
