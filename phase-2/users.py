@@ -40,10 +40,17 @@ class User():
     
     def get_id(self):
         return self.id
-    
+
+
 def login_required(f):
+    """Decorator to check if the user is logged in before performing an action"""
     def wrapper(user, *args, **kwargs):
         if user.session_token is None:
             raise Exception("User must be logged in to perform this action.")
         return f(user, *args, **kwargs)
     return wrapper
+
+@login_required
+def change_password(user, new_password):
+    user.password_hash = user._hash_password(new_password)
+    print(f"Password for {user.username} changed successfully.")
