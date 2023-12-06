@@ -3,6 +3,8 @@ import sqlite3
 
 
 def login(user,passwd):
+    """Check if the user exists in the database and the password is correct"""
+    
     with sqlite3.connect('room_reservation.sql3') as db:
         c = db.cursor()
         row = c.execute('SELECT * FROM users WHERE username=?',(user,))
@@ -15,6 +17,7 @@ def login(user,passwd):
     
 
 def adduser(user,passwd):
+    """Add a new user to the database"""
     encpass = hashlib.sha256(passwd.encode()).hexdigest()
     with sqlite3.connect('room_reservation.sql3') as db:
         c = db.cursor()
