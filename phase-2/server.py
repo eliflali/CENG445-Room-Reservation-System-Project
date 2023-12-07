@@ -21,7 +21,7 @@ class Command:
                 currentCommand = self.buffer.pop(0) #pop 0th elmt
                 return currentCommand #return 0th elmt
             else:
-                return "no commands left"
+                return ""
     
 
 
@@ -35,13 +35,14 @@ class Server():
     def start(self):
         self.socket.listen(1)
         print(f"Server listening on port {self.port}")
-        commandProcessor = Command()
+        
         while True:
+            commandProcessor = Command()
             agent_conn, agent_addr = self.socket.accept()
             reader = ReadAgent(agent_conn, agent_addr, commandProcessor)
             writer = WriteAgent(agent_conn, agent_addr, commandProcessor)
 
-            #now agent is being returned:
+            #now agents started:
             reader.start()
             writer.start()
 
@@ -50,12 +51,13 @@ class WriteAgent(Thread):
         self.connection = connection
         self.address = address
         self.command = command
+        self.lock = Lock()
         Thread.__init__(self)
 
     def run(self):
         command = self.command.getCommand()
-        response = CommandOperations.process_command(command)
-        self.connection.sendall(response.encode())
+        
+        self.connection.sendall(command.encode())
         notexit = True
         while notexit:
             with self.command.lock:
@@ -63,9 +65,10 @@ class WriteAgent(Thread):
                     break
                 self.command.arrivingCommand.wait()
             command = self.command.getCommand()
-            response = CommandOperations.process_command(command)
+            if command == "":
+                continue
             try:
-                self.connection.sendall(response.encode())
+                self.connection.sendall(command.encode())
             except:
                 notexit = False
 
@@ -96,6 +99,8 @@ class ReadAgent(Thread):
 
                 if command == '{"command":"close connection"}':
                     break
+                
+                command = CommandOperations.process_command(command)
                 self.command.newCommand(command)
 
         finally:
@@ -107,16 +112,13 @@ class CommandOperations:
      #in here make corresponding library calls:
     @staticmethod
     def process_command(command):
-        print(command)
         try:
             # First, parse the received command as JSON
             wrapped_command = json.loads(command)
-            print(wrapped_command)
             # Check if the 'command' key exists
             if 'command' in wrapped_command:
                 # Extract the command
                 actual_command_str = wrapped_command['command']
-                print("actual_command_str", actual_command_str)
                 # Parse the actual command as JSON
                 actual_command = json.loads(actual_command_str)
 
@@ -143,39 +145,6 @@ class CommandOperations:
                 pass
         else:
             return json.dumps({"response": "Invalid command"})
-
-
-#This is the Agent = Client implementation but not "client" in pdf
-"""
-class Agent(Thread):
-    def __init__(self,connection, address):
-        self.connection = connection
-        self.address = address
-        Thread.__init__(self)
-
-    def run(self):
-        print(f"Connection established with {self.address}")
-        try:
-            while True:
-                # Read the size of the command -- an binary encoded int
-                raw_size = self.connection.recv(4)
-                if not raw_size:
-                    break
-                size = struct.unpack('!I', raw_size)[0]
-
-                # Read the command
-                raw_command = self.connection.recv(size)
-                command = raw_command.decode()
-
-                # Process command
-                response = self.process_command(command)
-                self.connection.sendall(response.encode())
-        finally:
-            self.connection.close()
-            print(f"Connection closed with {self.address}")
-    
-   """
-
 
 #controlling if the arguments are true or not
 #if true, take the port number
