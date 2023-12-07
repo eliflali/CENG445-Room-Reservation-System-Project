@@ -38,5 +38,5 @@ def print_user(username, password):
     print("test")
 
 
-print_user("admin", "admin") # will print "test"
-print_user("admin", "wrong_password") # will raise an exception
+#print_user("admin", "admin") # will print "test"
+#print_user("admin", "wrong_password") # will raise an exception

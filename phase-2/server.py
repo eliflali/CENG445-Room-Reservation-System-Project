@@ -54,25 +54,37 @@ class Agent(threading.Thread):
     
     #in here make corresponding library calls:
     def process_command(self, command):
-        # Check if the command is a login attempt
-        if command.startswith('{') and command.endswith('}'):
-            try:
-                command_data = json.loads(command)
-                # Check for the 'login' command and the required parameters
-                if 'action' in command_data and command_data['action'] == 'login':
-                    username = command_data['username']
-                    password = command_data['password']
-                    # Attempt to login
-                    if login(username, password):
-                        return json.dumps({"response": "Login successful"})
-                    else:
-                        return json.dumps({"response": "Login failed"})
-                else:
-                    return json.dumps({"response": "Invalid command"})
-            except json.JSONDecodeError:
-                return json.dumps({"response": "Invalid JSON format"})
+        try:
+            # First, parse the received command as JSON
+            wrapped_command = json.loads(command)
+
+            # Check if the 'command' key exists
+            if 'command' in wrapped_command:
+                # Extract the command
+                actual_command_str = wrapped_command['command']
+
+                # Parse the actual command as JSON
+                actual_command = json.loads(actual_command_str)
+
+                # Now, process the actual command
+                return self.process_actual_command(actual_command)
+            else:
+                return json.dumps({"response": "Invalid command structure"})
+
+        except json.JSONDecodeError:
+            return json.dumps({"response": "Invalid JSON format"})
+
+    def process_actual_command(self, command):
+        # Here you process the actual command logic
+        if 'action' in command and command['action'] == 'login':
+            username = command['username']
+            password = command['password']
+            if login(username, password):
+                return json.dumps({"response": "Login successful"})
+            else:
+                return json.dumps({"response": "Login failed"})
         else:
-            return "Processed text command"
+            return json.dumps({"response": "Invalid command"})
 
 
 #controlling if the arguments are true or not
