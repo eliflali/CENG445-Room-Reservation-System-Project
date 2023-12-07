@@ -3,7 +3,7 @@ import threading
 import socket
 import json
 import struct
-
+from users import login
 
 class Server(threading.Thread):
     def __init__(self, port):
@@ -54,16 +54,24 @@ class Agent(threading.Thread):
     
     #in here make corresponding library calls:
     def process_command(self, command):
-        # Implement command processing logic 
-        # this is a mock one:
-
+        # Check if the command is a login attempt
         if command.startswith('{') and command.endswith('}'):
-            # Process JSON command
-            command_data = json.loads(command)
-            return json.dumps({"response": "Processed JSON command"})
+            try:
+                command_data = json.loads(command)
+                # Check for the 'login' command and the required parameters
+                if 'action' in command_data and command_data['action'] == 'login':
+                    username = command_data['username']
+                    password = command_data['password']
+                    # Attempt to login
+                    if login(username, password):
+                        return json.dumps({"response": "Login successful"})
+                    else:
+                        return json.dumps({"response": "Login failed"})
+                else:
+                    return json.dumps({"response": "Invalid command"})
+            except json.JSONDecodeError:
+                return json.dumps({"response": "Invalid JSON format"})
         else:
-            # Process simple text command
-            command_data = command.split()
             return "Processed text command"
 
 
