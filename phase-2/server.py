@@ -87,6 +87,7 @@ class ReadAgent(Thread):
             while True:
                 # Read the size of the command -- an binary encoded int
                 if not self.connection:  # Check if connection is closed
+                    exit(1)
                     break
                 raw_size = self.connection.recv(4)
                 if not raw_size:
@@ -146,13 +147,3 @@ class CommandOperations:
         else:
             return json.dumps({"response": "Invalid command"})
 
-#controlling if the arguments are true or not
-#if true, take the port number
-if __name__ == "__main__":
-    if len(sys.argv) != 3 or sys.argv[1] != '--port':
-        print("Usage: python3 yourapp.py --port <port_number>")
-        sys.exit(1)
-
-    port = int(sys.argv[2])
-    server = Server(port)
-    server.start()
