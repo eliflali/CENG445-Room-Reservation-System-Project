@@ -15,9 +15,7 @@ def send_command(host, port):
             user_input = input("Enter command (or 'close connection' to exit): ")
 
             # Check if the user wants to close the connection
-            if user_input.lower() == "close connection":
-                print("Closing connection.")
-                break
+            
 
             # Serialize the command to a JSON string and convert to bytes
             command_json = json.dumps({"command": user_input})
@@ -34,6 +32,10 @@ def send_command(host, port):
             sock.sendall(command_bytes)
             print(f"Command sent: {command_json}")
 
+            if user_input.lower() == "close connection":
+                print("Closing connection.")
+                break
+                
             # Wait for the response
             response_size_raw = sock.recv(4)
             if not response_size_raw:
@@ -43,6 +45,7 @@ def send_command(host, port):
             response_size = struct.unpack('!I', response_size_raw)[0]
             response = sock.recv(response_size).decode('utf-8')
             print(f"Response received: {response}")
+            
 
 if __name__ == "__main__":
     if len(sys.argv) != 3 or sys.argv[1] != '--port':
