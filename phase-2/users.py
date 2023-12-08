@@ -123,24 +123,24 @@ class UserManager:
         self.conn.close()
 
 
+# Example usage
+if __name__ == "__main__":
+    user_manager = UserManager("users.db")
 
+    user_manager.register_user("test", "test", "test@test.com", "Test User")
 
-user_manager = UserManager("users.db")
+    # Authenticate a user
+    token = user_manager.authenticate_user('test', 'test')
 
-user_manager.register_user("test", "test", "test@test.com", "Test User")
+    if token:
+        print("Login successful, token:", token)
+    else:
+        print("Login failed")
+        
 
-# Authenticate a user
-token = user_manager.authenticate_user('test', 'test')
+    # Verify token
+    is_valid = user_manager.verify_token('test', token)
+    print("Token valid:", is_valid)
 
-if token:
-    print("Login successful, token:", token)
-else:
-    print("Login failed")
-    
-
-# Verify token
-is_valid = user_manager.verify_token('test', token)
-print("Token valid:", is_valid)
-
-# Logout user
-user_manager.logout_user('test')
+    # Logout user
+    user_manager.logout_user('test')
