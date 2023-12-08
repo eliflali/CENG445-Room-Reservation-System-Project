@@ -1,42 +1,120 @@
 import hashlib
 import sqlite3
+import uuid
 
 
-def login(user,passwd):
-    """Check if the user exists in the database and the password is correct"""
+class UserManager:
+    def __init__(self, db_path: str) -> None:
+        self._db_path = db_path
+        self.conn = sqlite3.connect(self._db_path)
+        self._create_users_table()
     
-    with sqlite3.connect('room_reservation.sql3') as db:
-        c = db.cursor()
-        row = c.execute('SELECT * FROM users WHERE username=?',(user,))
-        row = c.fetchone()  # Fetch the first row of the result
+    def _create_users_table(self) -> None:
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                email TEXT,
+                fullname TEXT,
+                token TEXT
+            );
+        """)
         
-        if row is not None and hashlib.sha256(passwd.encode()).hexdigest() == row[1]:
-            return True
+        self.conn.commit()
+    
+    def register_user(self, username: str, password: str, email: str, fullname: str) -> None:
+        cursor = self.conn.cursor()
+        password_hash = self._hash_password(password)
+        try:
+            cursor.execute("""
+                INSERT INTO users (username, password_hash, email, fullname)
+                VALUES (?, ?, ?, ?);
+            """, (username, password_hash, email, fullname))
+            self.conn.commit()
+        except sqlite3.IntegrityError:
+            return False
+        return True
+
+    def authenticate_user(self, username: str, password: str) -> bool:
+        cursor = self.conn.cursor()
+        cursor.execute("""SELECT password_hash FROM users WHERE username = ?;""", (username,))
         
-        return False
+        result = cursor.fetchone()
+        
+        if result and self._check_password(password, result[0]):
+            return self._generate_token(username)
+        return None
+
+    def _hash_password(self, password: str) -> str:
+        return hashlib.sha256(password.encode()).hexdigest()
+    
+    def _check_password(self, password: str, password_hash: str) -> bool:
+        return self._hash_password(password) == password_hash
+    
+    def _generate_token(self, username: str) -> str:
+        token = str(uuid.uuid4())
+        cursor = self.conn.cursor()
+        cursor.execute("""UPDATE users SET token = ? WHERE username = ?;""", (token, username))
+        self.conn.commit()
+        return token
+    
+    def verify_token(self, username: str, token: str) -> bool:
+        cursor = self.conn.cursor()
+        cursor.execute("""SELECT token FROM users WHERE username = ?;""", (username,))
+        result = cursor.fetchone()
+        
+        return token == result[0] if result else False
+    
+    def logout_user(self, username: str) -> None:
+        cursor = self.conn.cursor()
+        cursor.execute("""UPDATE users SET token = NULL WHERE username = ?;""", (username,))
+        self.conn.commit()
+        
+    def get_user(self, username: str) -> dict:
+        cursor = self.conn.cursor()
+        cursor.execute("""SELECT username, email, fullname FROM users WHERE username = ?;""", (username,))
+        result = cursor.fetchone()
+        
+        return {
+            "username": result[0],
+            "email": result[1],
+            "fullname": result[2]
+        } if result else None
+    
+    def update_user(self, username: str, email: str, fullname: str) -> None:
+        cursor = self.conn.cursor()
+        cursor.execute("""UPDATE users SET email = ?, fullname = ? WHERE username = ?;""", (email, fullname, username))
+        self.conn.commit()
+    
+    def delete_user(self, username: str) -> None:
+        cursor = self.conn.cursor()
+        cursor.execute("""DELETE FROM users WHERE username = ?;""", (username,))
+        self.conn.commit()
+    
+    def __del__(self) -> None:
+        self.conn.close()
+
+
+
+
+user_manager = UserManager("users.db")
+
+user_manager.register_user("test", "test", "test@test.com", "Test User")
+
+# Authenticate a user
+token = user_manager.authenticate_user('test', 'test')
+
+if token:
+    print("Login successful, token:", token)
+else:
+    print("Login failed")
     
 
-def adduser(user,passwd):
-    """Add a new user to the database"""
-    encpass = hashlib.sha256(passwd.encode()).hexdigest()
-    with sqlite3.connect('room_reservation.sql3') as db:
-        c = db.cursor()
-        c.execute('insert into users values (?,?)',(user,encpass))
+# Verify token
+is_valid = user_manager.verify_token('test', token)
+print("Token valid:", is_valid)
 
-
-def login_required(f):
-    """Decorator to check if the user is logged in before performing an action"""
-    def wrapper(username, password, *args, **kwargs):
-        if not login(username, password):
-            raise Exception("User must be logged in to perform this action.")
-        return f(username, password, *args, **kwargs)
-    return wrapper
-
-
-@login_required
-def print_user(username, password):
-    print("test")
-
-
-print_user("admin", "admin") # will print "test"
-print_user("admin", "wrong_password") # will raise an exception
+# Logout user
+user_manager.logout_user('test')

@@ -19,3 +19,7 @@ class CRUD(ABC): # Inherit from ABC(Abstract base class)
         pass
 
 
+current_user = None
+
+
+
