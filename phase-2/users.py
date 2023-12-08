@@ -1,3 +1,29 @@
+"""
+This module defines a UserManager class for managing user data in a SQLite database.
+
+The UserManager class provides methods for creating a user table in the database, 
+registering a new user, and hashing a user's password. 
+
+The user table includes the following fields: id, username, password_hash, email, fullname, and token. 
+The id field is an integer that serves as the primary key. 
+The username field is a text string that must be unique. 
+The password_hash field is a text string that stores the hashed version of the user's password. 
+The email and fullname fields are text strings, and the token field is also a text string.
+
+The register_user method takes a username, password, email, and fullname as arguments. 
+It hashes the password and then inserts a new row into the user table with the provided values.
+
+The _hash_password method takes a password as an argument and returns a hashed version of the password.
+
+Example:
+    To use this module, import it and create an instance of UserManager:
+
+        from users import UserManager
+
+        user_manager = UserManager('my_database.db')
+        user_manager.register_user('username', 'password', 'email@example.com', 'Full Name')
+"""
+
 import hashlib
 import sqlite3
 import uuid
