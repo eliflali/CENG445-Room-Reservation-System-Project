@@ -39,7 +39,7 @@ class UserManager:
         cursor = self.conn.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 email TEXT,
@@ -125,10 +125,11 @@ class UserManager:
 
 # Example usage
 if __name__ == "__main__":
-    user_manager = UserManager("users.db")
+    user_manager = UserManager("project.db")
 
-    user_manager.register_user("test", "test", "test@test.com", "Test User")
+    user_manager.register_user("user1", "test", "test@test.com", "Test User")
 
+    print(user_manager.get_user("user1"))
     # Authenticate a user
     token = user_manager.authenticate_user('test', 'test')
 
