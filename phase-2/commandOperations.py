@@ -4,6 +4,7 @@ import socket
 import json
 import struct
 from users import UserManager
+from models import Event, Room, Organization
 
 class DatabaseLock:
     db_lock = Lock()
@@ -35,6 +36,7 @@ class CommandOperations:
     def process_actual_command(command):
         # Here you process the actual command logic
         usermanager = UserManager("./users.db")
+        organization = Organization()
         if 'action' in command:
             if command['action'] == 'login':
                 username = command['username']
@@ -57,7 +59,32 @@ class CommandOperations:
                     usermanager.register_user(username, password, email, fullname)
                     return json.dumps({"response": "Successfully registered."})
 
-                
+                elif command['action'] == 'list rooms':
+                    organization_id = command['organization id']
+                    org = organization.get_organization(organization_id)
+                    permission = permission_check([0], org)
+                    if permission == False:
+                        return json.dumps({"response": "You don't have permission."})
+                    return json.dumps({"response": org.rooms})
+
+                elif command['action'] == 'add room':
+                    organization_id = command['organization id']
+                    org = organization.get_organization(organization_id)
+                    permission = permission_check([1], org)
+                    if permission == False:
+                        return json.dumps({"response": "You don't have permission."})
+                    name = command['name']
+                    x = command['x']
+                    y = command['y']
+                    capacity = command['capacity']
+                    working_hours = command['working hours']
+                    permissions = command['permissions']
+                    org.create_organization_room(name, x, y, capacity, working_hours, permissions)
+                    return json.dumps({"response": "Room" + name + "successfully created."})
+
+
+
+
                     
 
         else:

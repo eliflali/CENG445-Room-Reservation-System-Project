@@ -25,3 +25,66 @@ eventPermissions = {
                             #If not granted room will be displayed as BUSY without any other detail.
                 "WRITE": 1 #User can update and delete (if Room has DELETE too) the Event.
 }
+
+class Permissions:
+    @staticmethod
+    def permission_check(permission_index1, permission_index2, object1, object2 = None):
+        type1 = object1.get_type()
+        object1_permissions = object1.get_permissions()
+        available = 1
+
+        permissionList1 = []
+        match type1:
+            case "organization":
+                permissionList1 = organizationPermissions
+                
+            case "room":
+                permissionList1 = roomPermissions
+
+            case "event":
+                permissionList1 = eventPermissions
+            case _:
+                print("Invalid object - no permission data.")
+                return False
+        
+        if object2:
+            type2 = object2.get_type()
+            object2_permissions = object2.get_permissions()
+            match type2:
+            case "organization":
+                permissionList2 = organizationPermissions
+                
+            case "room":
+                permissionList2 = roomPermissions
+
+            case "event":
+                permissionList2 = eventPermissions
+            case _:
+                print("Invalid object - no permission data.")
+                return False
+
+            for ind in permission_index2:
+                if permissionList2[ind] in object2_permissions:
+                    available = 1
+                else:
+                    available = 0
+        else:
+            type2 = None
+            object2_permissions = None
+        
+
+        
+        for ind in permission_index1:
+            if permissionList1[ind] in object1_permissions:
+                available = 1
+            else:
+                available = 0
+
+        
+
+        if available == 0:
+            return False
+        else:
+            return True
+
+        

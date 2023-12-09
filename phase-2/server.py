@@ -15,8 +15,6 @@ class Command:
         with self.lock:
             self.buffer.append(command)
             self.arrivingCommand.notify_all()
-
-    
     def getCommand(self):
         with self.lock:
             if len(self.buffer) > 0:

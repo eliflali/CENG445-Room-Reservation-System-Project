@@ -39,7 +39,10 @@ class Room(CRUD):
                         capacity=capacity, 
                         working_hours=working_hours, 
                         permissions=permissions)
-        self.reservations = []  
+        self.reservations = [] 
+
+    def get_type(self):
+        return "room" 
 
     def get_name(self):
         return self.name
@@ -121,6 +124,9 @@ class Event(CRUD):
     def reserved_event(self, room_id, start_time):
         self.room_id = room_id
         self.start_time = start_time
+
+    def get_type(self):
+        return "event"
     
     def get_permissions(self):
         return self.permissions
@@ -145,7 +151,7 @@ class Organization(CRUD):
     objects = {}  # Dictionary to store Organization objects
 
     #map changed to mapOrganization since map is reserved word
-    def __init__(self, owner, name, mapOrganization, backgroundImage = None):
+    def __init__(self, owner, name, mapOrganization, backgroundImage = None, permissions):
         super().__init__(name=name, 
                         mapOrganization=mapOrganization, 
                         backgroundImage=backgroundImage)
@@ -153,11 +159,20 @@ class Organization(CRUD):
         self.owner = owner.get_current_user()
         self.rooms = {}
         self.events = {}
+        self.objects[self.id] = self
+        self.permissions = permissions
 
     @classmethod
     def listobjects(cls):
         # List all objects of this class
         return cls.objects
+
+    @classmethod
+    def get_organization(self, id):
+        return cls.objects[id]
+
+    def get_type(self):
+        return "organization"
 
     def delete(self):
         for room in self.rooms:
