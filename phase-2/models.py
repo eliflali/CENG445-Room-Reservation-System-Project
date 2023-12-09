@@ -436,5 +436,3 @@ class View:
         return {date: events for date, events in day_based_results.items() if events} 
 
 
-
-

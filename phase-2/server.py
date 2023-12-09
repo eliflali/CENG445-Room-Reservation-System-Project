@@ -3,7 +3,11 @@ from threading import Thread, Lock, Condition
 import socket
 import json
 import struct
-from users import login
+from users import UserManager
+
+
+class DatabaseLock:
+    db_lock = Lock()
 
 class Command:
     def __init__(self):
@@ -14,6 +18,7 @@ class Command:
         with self.lock:
             self.buffer.append(command)
             self.arrivingCommand.notify_all()
+
     
     def getCommand(self):
         with self.lock:
@@ -134,16 +139,30 @@ class CommandOperations:
     @staticmethod
     def process_actual_command(command):
         # Here you process the actual command logic
+        usermanager = UserManager("./users.db")
         if 'action' in command:
             if command['action'] == 'login':
                 username = command['username']
                 password = command['password']
-                if login(username, password):
-                    return json.dumps({"response": "Login successful"})
+                token = usermanager.authenticate_user(username, password)
+                if token:
+                    return json.dumps({"response": "Login successful and this is your token: ", "token": token })
                 else:
                     return json.dumps({"response": "Login failed"})
-            if command['action'] == 'save':
-                pass
+
+            with DatabaseLock.db_lock:
+                if command['action'] == 'save': #this will be implemented
+                    return json.dumps({"response": "Activity saved."})
+                         
+                elif command['action'] == 'register':
+                    username = command['username']
+                    password = command['password']
+                    email = command['email']
+                    fullname = command['fullname']
+                    usermanager.register_user(username, password, email, fullname)
+                    return json.dumps({"response": "Successfully registered."})
+                    
+
         else:
             return json.dumps({"response": "Invalid command"})
 
