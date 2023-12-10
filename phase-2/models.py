@@ -227,7 +227,7 @@ class Organization(CRUD):
     #Update for room
     def update_organization_room(self, room_id, **kwargs):
         if room_id in self.rooms:
-            return self.rooms[room_id].update_room(**kwargs)
+            return self.rooms[room_id].update(**kwargs)
         else:
             raise ValueError(f"No room found with ID {room_id}")
 

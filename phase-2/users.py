@@ -84,6 +84,9 @@ class UserManager(metaclass=SingletonMeta):
             self.current_user = self.get_user(username)
             return self._generate_token(username)
         return None
+    
+    def get_current_user(self):
+        return self.current_user
 
     def _hash_password(self, password: str) -> str:
         return hashlib.sha256(password.encode()).hexdigest()
@@ -135,7 +138,7 @@ class UserManager(metaclass=SingletonMeta):
         self.conn.close()
 
 
-# Example usage
+"""# Example usage
 if __name__ == "__main__":
     user_manager = UserManager("project.db")
 
@@ -156,4 +159,4 @@ if __name__ == "__main__":
     print("Token valid:", is_valid)
 
     # Logout user
-    user_manager.logout_user('test')
+    user_manager.logout_user('test')"""

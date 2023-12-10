@@ -93,13 +93,13 @@ class CommandOperations:
                     capacity = command['capacity']
                     working_hours = command['working hours']
                     permissions = command['permissions']
-                    org.create_organization_room(name, x, y, capacity, working_hours, permissions)
-                    return json.dumps({"response": "Room" + name + "successfully created."})
+                    room = org.create_organization_room(name, x, y, capacity, working_hours, permissions)
+                    return json.dumps({"response": "Room " + name + " successfully created with id: " + str(room.get_id())})
                 
                 elif command['action'] == 'update_room':
                     organization_id = command['organization_id']
                     org_uuid = uuid.UUID(organization_id)
-                    org = Organization.get_organization(organization_uuid)
+                    org = Organization.get_organization(org_uuid)
                     permission = Permissions.permission_check([2], org)
                     if not permission:
                         return json.dumps({"response": "You don't have permission."})
@@ -157,7 +157,7 @@ class CommandOperations:
                     org_uuid = uuid.UUID(organization_id)
                     org = Organization.get_organization(org_uuid)
 
-                    room_id = command['room id']
+                    room_id = command['room_id']
                     room_uuid = uuid.UUID(room_id)
                     room = org.get_room(room_uuid)
 
@@ -204,3 +204,16 @@ class CommandOperations:
 
         else:
             return json.dumps({"response": "Invalid command"})
+
+
+    """
+    {"action": "add_room", 
+    "organization_id":"71d34c72-cbd9-4e94-8d3c-52045ae584fd",
+    "name": "room1", "x": 10, "y": 20, 
+    "capacity": 1000,"working hours": "09.00-17.00", 
+    "permissions": ["LIST", "RESERVE", "PERRESERVE", "DELETE", "WRITE"]}
+    """
+
+    """
+    {"action": "update_room", "organization_id":"71d34c72-cbd9-4e94-8d3c-52045ae584fd","room_id":"b7767821-af31-4a18-a374-ec2b7cec8ba4","name": "conference room"}
+    """
