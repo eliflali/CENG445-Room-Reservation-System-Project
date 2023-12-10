@@ -175,7 +175,7 @@ class Organization(CRUD):
         self.owner = owner
         self.rooms = {}
         self.events = {}
-        self.objects[self.id] = self
+        Organization.objects[self.id] = self
         self.permissions = permissions
 
     @classmethod
@@ -185,7 +185,8 @@ class Organization(CRUD):
 
     @classmethod
     def get_organization(cls, id):
-        return cls.objects[id]
+        print(id)
+        return Organization.objects[id]
 
     def get_owner(self):
         return self.owner
