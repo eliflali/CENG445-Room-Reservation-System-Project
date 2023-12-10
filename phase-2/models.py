@@ -256,7 +256,7 @@ class Organization(CRUD):
 
     def update_organization_event(self, event_id, **kwargs):
         if event_id in self.events:
-            return self.events[event_id].update_event(**kwargs)
+            return self.events[event_id].update(**kwargs)
         else:
             raise ValueError(f"No event found with ID {event_id}")
 
