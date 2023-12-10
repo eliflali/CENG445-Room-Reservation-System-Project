@@ -96,14 +96,17 @@ class CommandOperations:
                     org.create_organization_room(name, x, y, capacity, working_hours, permissions)
                     return json.dumps({"response": "Room" + name + "successfully created."})
                 
-                elif command['action'] == 'update room':
-                    organization_id = command['organization id']
-                    org = Organization.get_organization(organization_id)
+                elif command['action'] == 'update_room':
+                    organization_id = command['organization_id']
+                    org_uuid = uuid.UUID(organization_id)
+                    org = Organization.get_organization(organization_uuid)
                     permission = Permissions.permission_check([2], org)
                     if not permission:
                         return json.dumps({"response": "You don't have permission."})
 
-                    room_id = command['room id']  # This needs to be provided for an update
+                    room_id = command['room_id']  # This needs to be provided for an update
+                    room_uuid = uuid.UUID(room_id)
+                    room = org.get_room(room_uuid)
 
                     # Gather only the arguments that were provided in the command
                     kwargs_to_update = {}
@@ -122,16 +125,19 @@ class CommandOperations:
 
                     # Update the room with the provided attributes
                     try:
-                        org.update_organization_room(room_id, **kwargs_to_update)
+                        org.update_organization_room(room_uuid, **kwargs_to_update)
                         return json.dumps({"response": "Room successfully updated."})
                     except ValueError as e:
                         return json.dumps({"response": str(e)})
 
 
-                elif command['action'] == 'delete room':
-                    organization_id = command['organization id']
-                    room = command['room']
-                    org = Organization.get_organization(organization_id)
+                elif command['action'] == 'delete_room':
+                    organization_id = command['organization_id']
+                    room_id = command['room_id']
+                    org_uuid = uuid.UUID(organization_id)
+                    org = Organization.get_organization(org_uuid)
+                    room_uuid = uuid.UUID(room_id)
+                    room = org.get_room(room_uuid)
 
                     if(usermanager.get_current_user() == org.get_owner):
                         permission = Permissions.permission_check([2,3], org)
@@ -146,12 +152,14 @@ class CommandOperations:
                     org.delete_organization_room(room_id)
                     return json.dumps({"response": "Room successfully deleted."})
 
-                elif command['action'] == 'list events':
-                    organization_id = command['organization id']
-                    org = Organization.get_organization(organization_id)
+                elif command['action'] == 'list_events':
+                    organization_id = command['organization_id']
+                    org_uuid = uuid.UUID(organization_id)
+                    org = Organization.get_organization(org_uuid)
 
                     room_id = command['room id']
-                    room = org.get_room(organization_id)
+                    room_uuid = uuid.UUID(room_id)
+                    room = org.get_room(room_uuid)
 
                     permission = Permissions.permission_check([0], room)
                     if permission == False:
@@ -159,12 +167,14 @@ class CommandOperations:
 
                     return json.dumps({"response": room.get_reservations})
 
-                elif command['action'] == 'delete reservations':
-                    organization_id = command['organization id']
-                    org = Organization.get_organization(organization_id)
+                elif command['action'] == 'delete_reservations':
+                    organization_id = command['organization_id']
+                    org_uuid = uuid.UUID(organization_id)
+                    org = Organization.get_organization(org_uuid)
 
                     room_id = command['room id']
-                    room = org.get_room(organization_id)
+                    room_uuid = uuid.UUID(room_id)
+                    room = org.get_room(room_uuid)
 
                     if(usermanager.get_current_user() == org.get_owner):
                         permission = Permissions.permission_check([3], room)
