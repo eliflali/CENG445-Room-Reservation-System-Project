@@ -47,13 +47,13 @@ class UserManager(metaclass=SingletonMeta):
         self.current_user = None
     
     def _create_users_table(self) -> None:
-         cursor = self.conn.cursor()
-         cursor.execute("""
-             CREATE TABLE IF NOT EXISTS users (
-                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                 username TEXT UNIQUE NOT NULL,
-                 password_hash TEXT NOT NULL,
-                 email TEXT,
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                email TEXT,
                 fullname TEXT,
                 token TEXT
             );
@@ -93,7 +93,6 @@ class UserManager(metaclass=SingletonMeta):
         token = str(uuid.uuid4())
         cursor = self.conn.cursor()
         cursor.execute("""UPDATE users SET token = ? WHERE username = ?;""", (token, username))
- @@ -105,30 +105,31 @@
         
         return {
             "username": result[0],
@@ -117,8 +116,25 @@ class UserManager(metaclass=SingletonMeta):
  """# Example usage
  if __name__ == "__main__":
      user_manager = UserManager("project.db")
+# Example usage
+if __name__ == "__main__":
+    user_manager = UserManager("project.db")
 
-     user_manager.register_user("user1", "test", "test@test.com", "Test User")
+    user_manager.register_user("user1", "test", "test@test.com", "Test User")
+
+    print(user_manager.get_user("user1"))
+    # Authenticate a user
+    token = user_manager.authenticate_user('test', 'test')
+
+    if token:
+        print("Login successful, token:", token)
+    else:
+        print("Login failed")
+        
+
+    # Verify token
+    is_valid = user_manager.verify_token('test', token)
+    print("Token valid:", is_valid)
 
      print(user_manager.get_user("user1"))
      # Authenticate a user
