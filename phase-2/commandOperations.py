@@ -5,6 +5,7 @@ import json
 import struct
 from users import UserManager
 from models import Event, Room, Organization
+from permissions import Permissions
 
 class DatabaseLock:
     db_lock = Lock()
@@ -36,7 +37,7 @@ class CommandOperations:
     def process_actual_command(command):
         # Here you process the actual command logic
         usermanager = UserManager("./users.db")
-        organization = Organization()
+        #organization = Organization()
         if 'action' in command:
             if command['action'] == 'login':
                 username = command['username']
@@ -59,18 +60,29 @@ class CommandOperations:
                     usermanager.register_user(username, password, email, fullname)
                     return json.dumps({"response": "Successfully registered."})
 
+                elif command['action'] == 'create_organization':
+                    name = command['name']
+                    organization_map = command['map']
+                    permissions = command['permissions']
+                    backgroundImage = None
+                    if 'backgroundImage' in command:
+                        backgroundImage = command['backgroundImage']
+
+                    organization = Organization(usermanager.get_current_user(), name, organization_map, permissions, backgroundImage)
+                    return json.dumps({"response": "Organization " + name + " successfully created. Id: "+ str(organization.get_id())})
+                #Read for room
                 elif command['action'] == 'list rooms':
                     organization_id = command['organization id']
-                    org = organization.get_organization(organization_id)
-                    permission = permission_check([0], org)
+                    org = Organization.get_organization(organization_id)
+                    permission = Permissions.permission_check([0], org)
                     if permission == False:
                         return json.dumps({"response": "You don't have permission."})
                     return json.dumps({"response": org.rooms})
 
-                elif command['action'] == 'add room':
-                    organization_id = command['organization id']
-                    org = organization.get_organization(organization_id)
-                    permission = permission_check([1], org)
+                elif command['action'] == 'add_room':
+                    organization_id = command['organization_id']
+                    org = Organization.get_organization(organization_id)
+                    permission = Permissions.permission_check([1], org)
                     if permission == False:
                         return json.dumps({"response": "You don't have permission."})
                     name = command['name']
@@ -81,6 +93,97 @@ class CommandOperations:
                     permissions = command['permissions']
                     org.create_organization_room(name, x, y, capacity, working_hours, permissions)
                     return json.dumps({"response": "Room" + name + "successfully created."})
+                
+                elif command['action'] == 'update room':
+                    organization_id = command['organization id']
+                    org = Organization.get_organization(organization_id)
+                    permission = Permissions.permission_check([2], org)
+                    if not permission:
+                        return json.dumps({"response": "You don't have permission."})
+
+                    room_id = command['room id']  # This needs to be provided for an update
+
+                    # Gather only the arguments that were provided in the command
+                    kwargs_to_update = {}
+                    if 'name' in command:
+                        kwargs_to_update['name'] = command['name']
+                    if 'x' in command:
+                        kwargs_to_update['x'] = command['x']
+                    if 'y' in command:
+                        kwargs_to_update['y'] = command['y']
+                    if 'capacity' in command:
+                        kwargs_to_update['capacity'] = command['capacity']
+                    if 'working hours' in command:
+                        kwargs_to_update['working_hours'] = command['working hours']
+                    if 'permissions' in command:
+                        kwargs_to_update['permissions'] = command['permissions']
+
+                    # Update the room with the provided attributes
+                    try:
+                        org.update_organization_room(room_id, **kwargs_to_update)
+                        return json.dumps({"response": "Room successfully updated."})
+                    except ValueError as e:
+                        return json.dumps({"response": str(e)})
+
+
+                elif command['action'] == 'delete room':
+                    organization_id = command['organization id']
+                    room = command['room']
+                    org = Organization.get_organization(organization_id)
+
+                    if(usermanager.get_current_user() == org.get_owner):
+                        permission = Permissions.permission_check([2,3], org)
+
+                    else:
+                        permission = Permissions.permission_check([2,3], org, [4], room)
+                    
+                    if permission == False:
+                        return json.dumps({"response": "You don't have permission."})
+
+                    room_id = command['room_id']
+                    org.delete_organization_room(room_id)
+                    return json.dumps({"response": "Room successfully deleted."})
+
+                elif command['action'] == 'list events':
+                    organization_id = command['organization id']
+                    org = Organization.get_organization(organization_id)
+
+                    room_id = command['room id']
+                    room = org.get_room(organization_id)
+
+                    permission = Permissions.permission_check([0], room)
+                    if permission == False:
+                        return json.dumps({"response": "You don't have permission."})
+
+                    return json.dumps({"response": room.get_reservations})
+
+                elif command['action'] == 'delete reservations':
+                    organization_id = command['organization id']
+                    org = Organization.get_organization(organization_id)
+
+                    room_id = command['room id']
+                    room = org.get_room(organization_id)
+
+                    if(usermanager.get_current_user() == org.get_owner):
+                        permission = Permissions.permission_check([3], room)
+
+                    else:
+                        reservations = room.get_reservations()
+                        for reservation in reservations:
+                            _,_,event = reservation
+                            permission = Permissions.permission_check([3], room, [1], event)
+                            if permission == False:
+                                return json.dumps({"response": "You don't have permission."})
+                    
+                    if permission == False:
+                        return json.dumps({"response": "You don't have permission."})
+
+                    room.delete_reservations()
+
+                    return json.dumps({"response": "Successfully deleted reservations for room: " + room.get_name()})
+
+                
+                    
 
 
 

@@ -62,6 +62,9 @@ class Room(CRUD):
     def get_id(self):
         return self.id
 
+    def get_reservations(self):
+        return self.reservations
+
     def is_in_rectangle(self, rect):
         #rect is defined as (x,y,w,h) 
         #rect[0] = x - min x, rect[1] = y - max y, rect[2] = w - max x, rect[3] = h - min y
@@ -93,7 +96,7 @@ class Room(CRUD):
             return False
         
         for reservation in self.reservations:
-            reservation_start, reservation_end = reservation
+            reservation_start, reservation_end, event = reservation
             # Check for overlap between reservations
             if start_time < reservation_end and end_time > reservation_start:
                 return False  # Room is already reserved during this time
@@ -108,6 +111,19 @@ class Room(CRUD):
         # Check if the event's time interval falls within the room's working hours
         return workhours_start_time <= start_time.time() <= workhours_end_time and \
                workhours_start_time <= end_time.time() <= workhours_end_time
+
+    def delete_reservations(self):
+        for res in self.reservations:
+            _,_,event = res
+            event.reserved_event(None, None)
+            self.undo_reservation(res)
+
+    def undo_reservation(self, reservation):
+        for res in self.reservations:
+            if res[0] == reservation[0] and res[1] == reservation[1] and res[2] == reservation[2]:
+                list.remove(reservation)
+                return True
+        return False 
     
 class Event(CRUD):
     def __init__(self, title, description, category, capacity, duration, weekly, permissions):
@@ -151,12 +167,12 @@ class Organization(CRUD):
     objects = {}  # Dictionary to store Organization objects
 
     #map changed to mapOrganization since map is reserved word
-    def __init__(self, owner, name, mapOrganization, backgroundImage = None, permissions):
+    def __init__(self, owner, name, mapOrganization, permissions, backgroundImage = None):
         super().__init__(name=name, 
                         mapOrganization=mapOrganization, 
                         backgroundImage=backgroundImage)
         self.user_manager = owner #UserManager is singleton instance.
-        self.owner = owner.get_current_user()
+        self.owner = owner
         self.rooms = {}
         self.events = {}
         self.objects[self.id] = self
@@ -168,8 +184,14 @@ class Organization(CRUD):
         return cls.objects
 
     @classmethod
-    def get_organization(self, id):
+    def get_organization(cls, id):
         return cls.objects[id]
+
+    def get_owner(self):
+        return self.owner
+
+    def get_id(self):
+        return self.id
 
     def get_type(self):
         return "organization"
@@ -283,7 +305,7 @@ class Organization(CRUD):
             elif "minute" in unit:
                 duration_delta += timedelta(minutes=int(value))
 
-        room.reservations.append((start_time, start_time + duration_delta))
+        room.reservations.append((start_time, start_time + duration_delta, event))
 
         # Return a success message or reservation details
         return f"Room {room.name} reserved for event {event.title} starting at {start_time}."
@@ -360,6 +382,8 @@ class Organization(CRUD):
             ("PERWRITE" not in room.get_permissions() or "all" not in room.get_permissions())):
             raise ValueError("User does not have permission for weekly events.")
 
+        previous_room = self.get_room(event.room_id)
+        previous_room.undo_reservation((start_time, start_time + duration_delta, event))
         # Assign the room to the event and update its start time
         event.reserved_event(room.get_id(), start_time)
 
@@ -375,7 +399,8 @@ class Organization(CRUD):
             elif "minute" in unit:
                 duration_delta += timedelta(minutes=int(value))
 
-        room.reservations.append((start_time, start_time + duration_delta))
+    
+        room.reservations.append((start_time, start_time + duration_delta, event))
 
 
         # Return a success message or reservation details

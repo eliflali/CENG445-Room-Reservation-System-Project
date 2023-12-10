@@ -28,12 +28,23 @@ import hashlib
 import sqlite3
 import uuid
 
+class SingletonMeta(type):
+    """
+    A Singleton metaclass that creates only one instance of a class.
+    """
+    _instances = {}
 
-class UserManager:
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class UserManager(metaclass=SingletonMeta):
     def __init__(self, db_path: str) -> None:
         self._db_path = db_path
         self.conn = sqlite3.connect(self._db_path)
         self._create_users_table()
+        self.current_user = None
     
     def _create_users_table(self) -> None:
         cursor = self.conn.cursor()
@@ -66,10 +77,12 @@ class UserManager:
     def authenticate_user(self, username: str, password: str) -> bool:
         cursor = self.conn.cursor()
         cursor.execute("""SELECT password_hash FROM users WHERE username = ?;""", (username,))
-        
         result = cursor.fetchone()
+
+
         
         if result and self._check_password(password, result[0]):
+            self.current_user = self.get_user(username)
             return self._generate_token(username)
         return None
 
@@ -118,6 +131,9 @@ class UserManager:
         cursor = self.conn.cursor()
         cursor.execute("""DELETE FROM users WHERE username = ?;""", (username,))
         self.conn.commit()
+    
+    def get_current_user(self):
+        return self.current_user
     
     def __del__(self) -> None:
         self.conn.close()
