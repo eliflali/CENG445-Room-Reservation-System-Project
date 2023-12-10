@@ -1,8 +1,8 @@
 organizationPermissions = {
-                    "LIST": 0, #user can list the Room objects in the organization
-                    "ADD": 1, #user can add new rooms to the organization.
-                    "ACCESS": 2, #user can access the rooms and events in the organization.
-                    "DELETE": 3 # user can delete a Room in the organization 
+                    0: "LIST", #user can list the Room objects in the organization
+                    1: "ADD", #user can add new rooms to the organization.
+                    2: "ACCESS", #user can access the rooms and events in the organization.
+                    3: "DELETE" # user can delete a Room in the organization 
                     #if s/he also has WRITE permission on it. 
                     #Owner of the Organization can delete the Room 
                     #without WRITE permission. 
@@ -11,23 +11,23 @@ organizationPermissions = {
                     }
 
 roomPermissions = {
-                "LIST": 0, #user can list and view the Event reservations for the room.
-                "RESERVE": 1, #user can reserve the room.
-                "PERRESERVE": 2, #user can reserve the room for periodic events.Implies RESERVE.
-                "DELETE": 3, #user can delete the reservations for the room. 
+                0: "LIST", #user can list and view the Event reservations for the room.
+                1: "RESERVE", #user can reserve the room.
+                2: "PERRESERVE", #user can reserve the room for periodic events.Implies RESERVE.
+                3: "DELETE", #user can delete the reservations for the room. 
                             #It requires WRITE permission on the Event. 
                             #Owner of the Room can delete any events 
                             #WRITE permission on event.
-                "WRITE": 4 #user can delete the reservations for the room. 
+                4: "WRITE" #user can delete the reservations for the room. 
                             #It requires WRITE permission on the Event. 
                             #Owner of the Room can delete any events 
                             #WRITE permission on event.
 }
 
 eventPermissions = {
-                "READ": 0, #User can see the title and details of the events. 
+                0: "READ", #User can see the title and details of the events. 
                             #If not granted room will be displayed as BUSY without any other detail.
-                "WRITE": 1 #User can update and delete (if Room has DELETE too) the Event.
+                1: "WRITE" #User can update and delete (if Room has DELETE too) the Event.
 }
 
 class Permissions:
@@ -77,6 +77,7 @@ class Permissions:
             object2_permissions = None
         
 
+        print(permissionList1)
         
         for ind in permission_index1:
             if permissionList1[ind] in object1_permissions:

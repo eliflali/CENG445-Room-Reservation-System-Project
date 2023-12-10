@@ -2,6 +2,7 @@ import datetime
 from datetime import datetime, timedelta
 import uuid
 import faker
+from users import UserManager
 
 
 class CRUD:
@@ -185,8 +186,10 @@ class Organization(CRUD):
 
     @classmethod
     def get_organization(cls, id):
-        print(id)
         return Organization.objects[id]
+
+    def get_permissions(self):
+        return self.permissions
 
     def get_owner(self):
         return self.owner
@@ -207,7 +210,8 @@ class Organization(CRUD):
         del self
 
     def create_organization_room(self, name, x, y, capacity, working_hours, permissions):
-        current_user = self.user_manager.get_current_user()
+        usermanager = UserManager("./users.db")
+        current_user = usermanager.get_current_user()
         if current_user is None:
             raise Exception("No current user set in UserManager.")
         new_room = Room(current_user, name, x, y, capacity, working_hours, permissions)

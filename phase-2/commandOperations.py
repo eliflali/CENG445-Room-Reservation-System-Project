@@ -6,6 +6,7 @@ import struct
 from users import UserManager
 from models import Event, Room, Organization
 from permissions import Permissions
+import uuid
 
 class DatabaseLock:
     db_lock = Lock()
@@ -81,7 +82,8 @@ class CommandOperations:
 
                 elif command['action'] == 'add_room':
                     organization_id = command['organization_id']
-                    org = Organization.get_organization(organization_id)
+                    org_uuid = uuid.UUID(organization_id)
+                    org = Organization.get_organization(org_uuid)
                     permission = Permissions.permission_check([1], org)
                     if permission == False:
                         return json.dumps({"response": "You don't have permission."})
