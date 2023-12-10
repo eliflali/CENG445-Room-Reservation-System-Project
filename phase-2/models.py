@@ -278,22 +278,6 @@ class Organization(CRUD):
         if event.room_id is not None:
             raise ValueError("Event is already assigned to a room.")
 
-        if(("WRITE" not in event.get_permissions() 
-            or 
-            "WRITE" not in room.get_permissions()) 
-            and
-            ("all" not in event.get_permissions()
-            or
-            "all" not in room.get_permissions())
-            ):
-            raise ValueError("User does not have permission.")
-        
-        if(type(event.weekly) is datetime 
-            and 
-            ("PERWRITE" not in room.get_permissions() or "all" not in room.get_permissions())):
-            raise ValueError("User does not have permission for weekly events.")
-
-
         # Assign the room to the event and update its start time
         event.reserved_event(room.get_id(), start_time)
 

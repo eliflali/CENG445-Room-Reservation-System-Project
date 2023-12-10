@@ -152,6 +152,32 @@ class CommandOperations:
                     org.delete_organization_room(room_id)
                     return json.dumps({"response": "Room successfully deleted."})
 
+                elif command['action'] == 'create_event':
+                    organization_id = command['organization_id']
+                    org_uuid = uuid.UUID(organization_id)
+                    org = Organization.get_organization(org_uuid)
+
+                    room_id = command['room_id']
+                    room_uuid = uuid.UUID(room_id)
+                    room = org.get_room(room_uuid)
+
+                    permission = Permissions.permission_check([4], room, [1], event)
+                    if permission == False:
+                        return json.dumps({"response": "You don't have permission."})
+
+                    title, description, category, capacity, duration, weekly, permissions
+                    title = command['title']
+                    description = command['description']
+                    category = command['category']
+                    capacity = command['capacity']
+                    duration = command['duration']
+                    weekly = command['weekly']
+                    permissions = command['permissions']
+
+                    event = org.create_organization_event(title, description, category, capacity, duration, weekly, permissions)
+
+                    return json.dumps({"response": "Event successfully created with id: " + str(event.get_id())})
+
                 elif command['action'] == 'list_events':
                     organization_id = command['organization_id']
                     org_uuid = uuid.UUID(organization_id)
@@ -165,7 +191,34 @@ class CommandOperations:
                     if permission == False:
                         return json.dumps({"response": "You don't have permission."})
 
-                    return json.dumps({"response": room.get_reservations})
+                    return json.dumps({"response": room.get_reservations()})
+
+                elif command['action'] == 'reserve': 
+                    organization_id = command['organization_id']
+                    org_uuid = uuid.UUID(organization_id)
+                    org = Organization.get_organization(org_uuid)
+
+                    room_id = command['room_id']
+                    room_uuid = uuid.UUID(room_id)
+                    room = org.get_room(room_uuid)
+
+                    event_id = command['event_id']
+                    event_uuid = uuid.UUID(event_id)
+                    event = org.get_event(event_uuid)
+
+                    start_time = command['start_time']
+
+                    if type(event.weekly) is datetime:
+                        permission = Permissions.permission_check([2], room)
+                    else:
+                        permission = Permissions.permission_check([1], room) or Permissions.permission_check([2], room)
+            
+                    if permission == False:
+                        return json.dumps({"response": "You don't have permission."})
+
+                    org.reserve(event, room, start_time)
+
+                    return json.dumps({"response": room.get_name() + " reserved for event " + event.get_name()})
 
                 elif command['action'] == 'delete_reservations':
                     organization_id = command['organization_id']
@@ -193,6 +246,25 @@ class CommandOperations:
                     room.delete_reservations()
 
                     return json.dumps({"response": "Successfully deleted reservations for room: " + room.get_name()})
+                
+                elif command['action'] == 'read_event':
+                    organization_id = command['organization_id']
+                    org_uuid = uuid.UUID(organization_id)
+                    org = Organization.get_organization(org_uuid)
+
+                    room_id = command['room_id']
+                    room_uuid = uuid.UUID(room_id)
+                    room = org.get_room(room_uuid)
+
+                    event_id = command['event_id']
+                    event_uuid = uuid.UUID(event_id)
+                    event = org.get_event(event_uuid)
+
+                    permission = Permissions.permission_check([0], event)
+                    if permission == False:
+                        return json.dumps({"response": "You don't have permission."})
+
+                    return json.dumps({"response": event.get()})
 
                 
                     
