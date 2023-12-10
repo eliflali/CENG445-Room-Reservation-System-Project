@@ -28,12 +28,23 @@ import hashlib
 import sqlite3
 import uuid
 
+class SingletonMeta(type):
+    """
+    A Singleton metaclass that creates only one instance of a class.
+    """
+    _instances = {}
 
-class UserManager:
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class UserManager(metaclass=SingletonMeta):
     def __init__(self, db_path: str) -> None:
         self._db_path = db_path
         self.conn = sqlite3.connect(self._db_path)
         self._create_users_table()
+        self.current_user = None
     
     def _create_users_table(self) -> None:
         cursor = self.conn.cursor()
@@ -50,7 +61,7 @@ class UserManager:
         
         self.conn.commit()
     
-    def register_user(self, username: str, password: str, email: str, fullname: str) -> None:
+     def register_user(self, username: str, password: str, email: str, fullname: str) -> None:
         cursor = self.conn.cursor()
         password_hash = self._hash_password(password)
         try:
@@ -72,7 +83,6 @@ class UserManager:
         if result and self._check_password(password, result[0]):
             return self._generate_token(username)
         return None
-
     def _hash_password(self, password: str) -> str:
         return hashlib.sha256(password.encode()).hexdigest()
     
@@ -83,25 +93,6 @@ class UserManager:
         token = str(uuid.uuid4())
         cursor = self.conn.cursor()
         cursor.execute("""UPDATE users SET token = ? WHERE username = ?;""", (token, username))
-        self.conn.commit()
-        return token
-    
-    def verify_token(self, username: str, token: str) -> bool:
-        cursor = self.conn.cursor()
-        cursor.execute("""SELECT token FROM users WHERE username = ?;""", (username,))
-        result = cursor.fetchone()
-        
-        return token == result[0] if result else False
-    
-    def logout_user(self, username: str) -> None:
-        cursor = self.conn.cursor()
-        cursor.execute("""UPDATE users SET token = NULL WHERE username = ?;""", (username,))
-        self.conn.commit()
-        
-    def get_user(self, username: str) -> dict:
-        cursor = self.conn.cursor()
-        cursor.execute("""SELECT username, email, fullname FROM users WHERE username = ?;""", (username,))
-        result = cursor.fetchone()
         
         return {
             "username": result[0],
@@ -122,7 +113,9 @@ class UserManager:
     def __del__(self) -> None:
         self.conn.close()
 
-
+ """# Example usage
+ if __name__ == "__main__":
+     user_manager = UserManager("project.db")
 # Example usage
 if __name__ == "__main__":
     user_manager = UserManager("project.db")
@@ -143,5 +136,6 @@ if __name__ == "__main__":
     is_valid = user_manager.verify_token('test', token)
     print("Token valid:", is_valid)
 
-    # Logout user
-    user_manager.logout_user('test')
+     print(user_manager.get_user("user1"))
+     # Authenticate a user
+     token = user_manager.authenticate_user('test', 'test')"""

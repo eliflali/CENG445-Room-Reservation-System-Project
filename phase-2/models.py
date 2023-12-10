@@ -2,6 +2,7 @@ import datetime
 from datetime import datetime, timedelta
 import uuid
 import faker
+from users import UserManager
 
 
 class CRUD:
@@ -39,7 +40,10 @@ class Room(CRUD):
                         capacity=capacity, 
                         working_hours=working_hours, 
                         permissions=permissions)
-        self.reservations = []  
+        self.reservations = [] 
+
+    def get_type(self):
+        return "room" 
 
     def get_name(self):
         return self.name
@@ -58,6 +62,9 @@ class Room(CRUD):
     
     def get_id(self):
         return self.id
+
+    def get_reservations(self):
+        return self.reservations
 
     def is_in_rectangle(self, rect):
         #rect is defined as (x,y,w,h) 
@@ -90,7 +97,7 @@ class Room(CRUD):
             return False
         
         for reservation in self.reservations:
-            reservation_start, reservation_end = reservation
+            reservation_start, reservation_end, event = reservation
             # Check for overlap between reservations
             if start_time < reservation_end and end_time > reservation_start:
                 return False  # Room is already reserved during this time
@@ -105,6 +112,19 @@ class Room(CRUD):
         # Check if the event's time interval falls within the room's working hours
         return workhours_start_time <= start_time.time() <= workhours_end_time and \
                workhours_start_time <= end_time.time() <= workhours_end_time
+
+    def delete_reservations(self):
+        for res in self.reservations:
+            _,_,event = res
+            event.reserved_event(None, None)
+            self.undo_reservation(res)
+
+    def undo_reservation(self, reservation):
+        for res in self.reservations:
+            if res[0] == reservation[0] and res[1] == reservation[1] and res[2] == reservation[2]:
+                list.remove(reservation)
+                return True
+        return False 
     
 class Event(CRUD):
     def __init__(self, title, description, category, capacity, duration, weekly, permissions):
@@ -121,6 +141,9 @@ class Event(CRUD):
     def reserved_event(self, room_id, start_time):
         self.room_id = room_id
         self.start_time = start_time
+
+    def get_type(self):
+        return "event"
     
     def get_permissions(self):
         return self.permissions
@@ -145,19 +168,37 @@ class Organization(CRUD):
     objects = {}  # Dictionary to store Organization objects
 
     #map changed to mapOrganization since map is reserved word
-    def __init__(self, owner, name, mapOrganization, backgroundImage = None):
+    def __init__(self, owner, name, mapOrganization, permissions, backgroundImage = None):
         super().__init__(name=name, 
                         mapOrganization=mapOrganization, 
                         backgroundImage=backgroundImage)
         self.user_manager = owner #UserManager is singleton instance.
-        self.owner = owner.get_current_user()
+        self.owner = owner
         self.rooms = {}
         self.events = {}
+        Organization.objects[self.id] = self
+        self.permissions = permissions
 
     @classmethod
     def listobjects(cls):
         # List all objects of this class
         return cls.objects
+
+    @classmethod
+    def get_organization(cls, id):
+        return Organization.objects[id]
+
+    def get_permissions(self):
+        return self.permissions
+
+    def get_owner(self):
+        return self.owner
+
+    def get_id(self):
+        return self.id
+
+    def get_type(self):
+        return "organization"
 
     def delete(self):
         for room in self.rooms:
@@ -169,7 +210,8 @@ class Organization(CRUD):
         del self
 
     def create_organization_room(self, name, x, y, capacity, working_hours, permissions):
-        current_user = self.user_manager.get_current_user()
+        usermanager = UserManager("./users.db")
+        current_user = usermanager.get_current_user()
         if current_user is None:
             raise Exception("No current user set in UserManager.")
         new_room = Room(current_user, name, x, y, capacity, working_hours, permissions)
@@ -268,7 +310,7 @@ class Organization(CRUD):
             elif "minute" in unit:
                 duration_delta += timedelta(minutes=int(value))
 
-        room.reservations.append((start_time, start_time + duration_delta))
+        room.reservations.append((start_time, start_time + duration_delta, event))
 
         # Return a success message or reservation details
         return f"Room {room.name} reserved for event {event.title} starting at {start_time}."
@@ -345,6 +387,8 @@ class Organization(CRUD):
             ("PERWRITE" not in room.get_permissions() or "all" not in room.get_permissions())):
             raise ValueError("User does not have permission for weekly events.")
 
+        previous_room = self.get_room(event.room_id)
+        previous_room.undo_reservation((start_time, start_time + duration_delta, event))
         # Assign the room to the event and update its start time
         event.reserved_event(room.get_id(), start_time)
 
@@ -360,7 +404,8 @@ class Organization(CRUD):
             elif "minute" in unit:
                 duration_delta += timedelta(minutes=int(value))
 
-        room.reservations.append((start_time, start_time + duration_delta))
+    
+        room.reservations.append((start_time, start_time + duration_delta, event))
 
 
         # Return a success message or reservation details
