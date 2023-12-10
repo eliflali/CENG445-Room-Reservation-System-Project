@@ -37,7 +37,7 @@ class CommandOperations:
     @staticmethod
     def process_actual_command(command):
         # Here you process the actual command logic
-        usermanager = UserManager("./users.db")
+        usermanager = UserManager("./project.db")
         #organization = Organization()
         if 'action' in command:
             if command['action'] == 'login':

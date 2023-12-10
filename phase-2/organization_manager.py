@@ -85,10 +85,10 @@ class OrganizationManager:
     
 
 
-if __name__ == "__main__":
+"""if __name__ == "__main__":
     organization_manager = OrganizationManager("project.db")
     
     organization_manager.create_organization("org1", "org1 description", "user1")
     
     org1 = organization_manager.get_organization_owner("org1")
-    print(org1)
+    print(org1)"""

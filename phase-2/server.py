@@ -3,7 +3,6 @@ from threading import Thread, Lock, Condition
 import socket
 import json
 import struct
-from users import UserManager
 from commandOperations import CommandOperations
 
 class Command:
