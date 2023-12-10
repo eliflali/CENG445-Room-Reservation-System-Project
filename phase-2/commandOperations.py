@@ -148,8 +148,7 @@ class CommandOperations:
                     if permission == False:
                         return json.dumps({"response": "You don't have permission."})
 
-                    room_id = command['room_id']
-                    org.delete_organization_room(room_id)
+                    org.delete_organization_room(room_uuid)
                     return json.dumps({"response": "Room successfully deleted."})
 
                 elif command['action'] == 'create_event':
@@ -266,13 +265,65 @@ class CommandOperations:
 
                     return json.dumps({"response": event.get()})
 
-                
-                    
+                elif command['action'] == 'update_event':
+                    organization_id = command['organization_id']
+                    org_uuid = uuid.UUID(organization_id)
+                    org = Organization.get_organization(org_uuid)
 
+                    room_id = command['room_id']
+                    room_uuid = uuid.UUID(room_id)
+                    room = org.get_room(room_uuid)
 
+                    event_id = command['event_id']
+                    event_uuid = uuid.UUID(event_id)
+                    event = org.get_event(event_uuid)
 
+                    permission = Permissions.permission_check([1], event)
+                    if permission == False:
+                        return json.dumps({"response": "You don't have permission."})
 
-                    
+                    kwargs_to_update = {}
+                    if 'title' in command:
+                        kwargs_to_update['title'] = command['title']
+                    if 'description' in command:
+                        kwargs_to_update['description'] = command['description']
+                    if 'category' in command:
+                        kwargs_to_update['category'] = command['category']
+                    if 'capacity' in command:
+                        kwargs_to_update['capacity'] = command['capacity']
+                    if 'duration' in command:
+                        kwargs_to_update['duration'] = command['duration']
+                    if 'weekly' in command:
+                        kwargs_to_update['weekly'] = command['weekly']
+                    if 'permissions' in command:
+                        kwargs_to_update['permissions'] = command['permissions']
+
+                    # Update the room with the provided attributes
+                    try:
+                        org.update_organization_event(event_uuid, **kwargs_to_update)
+                        return json.dumps({"response": "Event successfully updated."})
+                    except ValueError as e:
+                        return json.dumps({"response": str(e)})
+
+                elif command['action'] == 'delete_event':
+                    organization_id = command['organization_id']
+                    org_uuid = uuid.UUID(organization_id)
+                    org = Organization.get_organization(org_uuid)
+
+                    room_id = command['room_id']
+                    room_uuid = uuid.UUID(room_id)
+                    room = org.get_room(room_uuid)
+
+                    event_id = command['event_id']
+                    event_uuid = uuid.UUID(event_id)
+                    event = org.get_event(event_uuid)
+
+                    permission = Permissions.permission_check([1], event, [3], room)
+                    if permission == False:
+                        return json.dumps({"response": "You don't have permission."})
+
+                    org.delete_organization_event(event_uuid)
+                    return json.dumps({"response": "Event successfully deleted."})
 
         else:
             return json.dumps({"response": "Invalid command"})
