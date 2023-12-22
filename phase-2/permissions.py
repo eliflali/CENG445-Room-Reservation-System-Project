@@ -30,7 +30,9 @@ eventPermissions = {
                 1: "WRITE" #User can update and delete (if Room has DELETE too) the Event.
 }
 
+
 class Permissions:
+
     @staticmethod
     def permission_check(permission_index1, object1, permission_index2 = None, object2 = None):
         type1 = object1.get_type()
@@ -91,5 +93,7 @@ class Permissions:
             return False
         else:
             return True
+
+
 
         

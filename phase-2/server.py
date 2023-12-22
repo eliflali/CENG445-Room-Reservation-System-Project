@@ -1,9 +1,8 @@
-import sys
 from threading import Thread, Lock, Condition
 import socket
-import json
 import struct
 from commandOperations import CommandOperations
+
 
 class Command:
     def __init__(self):
@@ -22,7 +21,6 @@ class Command:
             else:
                 return ""
     
-
 
 class Server():
     def __init__(self, port):
@@ -100,6 +98,7 @@ class ReadAgent(Thread):
                 if command == '{"command":"close connection"}':
                     break
                 
+                print(f"Received command: {command}")
                 command = CommandOperations.process_command(command)
                 self.command.newCommand(command)
 

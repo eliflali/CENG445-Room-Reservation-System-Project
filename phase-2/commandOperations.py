@@ -1,17 +1,24 @@
+import datetime
 import sys
 from threading import Thread, Lock, Condition
 import socket
 import json
 import struct
-from users import UserManager
-from models import Event, Room, Organization
-from permissions import Permissions
 import uuid
+import views
 
 class DatabaseLock:
     db_lock = Lock()
 
 
+def process_token(token):
+    response = views.verify_token(token)
+    if not response:
+        print("Invalid token.")
+        return None
+    else:
+        print("Token is valid. And, username: " + response + " is processing the command.")
+        return response
 class CommandOperations:
      #in here make corresponding library calls:
     @staticmethod
@@ -37,13 +44,12 @@ class CommandOperations:
     @staticmethod
     def process_actual_command(command):
         # Here you process the actual command logic
-        usermanager = UserManager("./project.db")
         #organization = Organization()
         if 'action' in command:
             if command['action'] == 'login':
                 username = command['username']
                 password = command['password']
-                token = usermanager.authenticate_user(username, password)
+                token = views.login(username, password)
                 if token:
                     return json.dumps({"response": "Login successful and this is your token: ", "token": token })
                 else:
@@ -58,285 +64,398 @@ class CommandOperations:
                     password = command['password']
                     email = command['email']
                     fullname = command['fullname']
-                    usermanager.register_user(username, password, email, fullname)
-                    return json.dumps({"response": "Successfully registered."})
-
+                    
+                    if views.register(username, password, email, fullname):
+                        return json.dumps({"response": "Successfully registered."})
+                    else: 
+                        return json.dumps({"response": "Registration failed."})
+                 
+                #create_organization(user: str, org_name: str, description: str):
                 elif command['action'] == 'create_organization':
-                    name = command['name']
-                    organization_map = command['map']
-                    permissions = command['permissions']
-                    backgroundImage = None
-                    if 'backgroundImage' in command:
-                        backgroundImage = command['backgroundImage']
+                    token = command['token']
+                    name = command['org_name']
+                    description = command['description']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                
 
-                    organization = Organization(usermanager.get_current_user(), name, organization_map, permissions, backgroundImage)
-                    return json.dumps({"response": "Organization " + name + " successfully created. Id: "+ str(organization.get_id())})
-                #Read for room
-                elif command['action'] == 'list rooms':
-                    organization_id = command['organization id']
-                    org = Organization.get_organization(organization_id)
-                    permission = Permissions.permission_check([0], org)
-                    if permission == False:
-                        return json.dumps({"response": "You don't have permission."})
-                    return json.dumps({"response": org.rooms})
+                    response = views.create_organization(user, name, description)
+                    return json.dumps({"response": response})
 
-                elif command['action'] == 'add_room':
-                    organization_id = command['organization_id']
-                    org_uuid = uuid.UUID(organization_id)
-                    org = Organization.get_organization(org_uuid)
-                    permission = Permissions.permission_check([1], org)
-                    if permission == False:
-                        return json.dumps({"response": "You don't have permission."})
-                    name = command['name']
+                
+                #update_organization(user: str, org_name, field, value):
+                elif command['action'] == 'update_organization':
+                    token = command['token']
+                    org_name = command['org_name']
+                    field = command['field']
+                    value = command['value']
+
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.update_organization(user, org_name, field, value)
+                    return json.dumps({"response": response})
+                
+                #list_rooms(user: str, org_name: str):
+                elif command['action'] == 'list_rooms':
+                    token = command['token']
+                    org_name = command['org_name']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    return json.dumps({"response": views.list_rooms(user, org_name)})
+                
+                # create_room(user: str, org: str, room_name: str, x: int, y: int, capacity: int, working_hours: str):
+                elif command['action'] == 'create_room':
+                    token = command['token']
+                    org_name = command['org_name']
+                    room_name = command['room_name']
                     x = command['x']
                     y = command['y']
                     capacity = command['capacity']
-                    working_hours = command['working hours']
+                    working_hours = command['working_hours']
                     permissions = command['permissions']
-                    room = org.create_organization_room(name, x, y, capacity, working_hours, permissions)
-                    return json.dumps({"response": "Room " + name + " successfully created with id: " + str(room.get_id())})
-                
-                elif command['action'] == 'update_room':
-                    organization_id = command['organization_id']
-                    org_uuid = uuid.UUID(organization_id)
-                    org = Organization.get_organization(org_uuid)
-                    permission = Permissions.permission_check([2], org)
-                    if not permission:
-                        return json.dumps({"response": "You don't have permission."})
 
-                    room_id = command['room_id']  # This needs to be provided for an update
-                    room_uuid = uuid.UUID(room_id)
-                    room = org.get_room(room_uuid)
-
-                    # Gather only the arguments that were provided in the command
-                    kwargs_to_update = {}
-                    if 'name' in command:
-                        kwargs_to_update['name'] = command['name']
-                    if 'x' in command:
-                        kwargs_to_update['x'] = command['x']
-                    if 'y' in command:
-                        kwargs_to_update['y'] = command['y']
-                    if 'capacity' in command:
-                        kwargs_to_update['capacity'] = command['capacity']
-                    if 'working hours' in command:
-                        kwargs_to_update['working_hours'] = command['working hours']
-                    if 'permissions' in command:
-                        kwargs_to_update['permissions'] = command['permissions']
-
-                    # Update the room with the provided attributes
-                    try:
-                        org.update_organization_room(room_uuid, **kwargs_to_update)
-                        return json.dumps({"response": "Room successfully updated."})
-                    except ValueError as e:
-                        return json.dumps({"response": str(e)})
-
-
-                elif command['action'] == 'delete_room':
-                    organization_id = command['organization_id']
-                    room_id = command['room_id']
-                    org_uuid = uuid.UUID(organization_id)
-                    org = Organization.get_organization(org_uuid)
-                    room_uuid = uuid.UUID(room_id)
-                    room = org.get_room(room_uuid)
-
-                    if(usermanager.get_current_user() == org.get_owner):
-                        permission = Permissions.permission_check([2,3], org)
-
-                    else:
-                        permission = Permissions.permission_check([2,3], org, [4], room)
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
                     
-                    if permission == False:
-                        return json.dumps({"response": "You don't have permission."})
+                    response = views.create_room(user, org_name, room_name, x, y, capacity, working_hours, permissions)
+                    return json.dumps({"response": response})
+                
+                #access_room(user: str, org: str, room_name: str):
+                elif command['action'] == 'access_room':
+                    token = command['token']
+                    org_name = command['org_name']
+                    room_name = command['room_name']
 
-                    org.delete_organization_room(room_uuid)
-                    return json.dumps({"response": "Room successfully deleted."})
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.access_room(user, org_name, room_name)
+                    return json.dumps({"response": response})
+                
+                #access_event(user: str, org: str, event_title: str):
+                elif command['action'] == 'access_event':
+                    token = command['token']
+                    org_name = command['org_name']
+                    event_title = command['event_title']
 
-                elif command['action'] == 'create_event':
-                    organization_id = command['organization_id']
-                    org_uuid = uuid.UUID(organization_id)
-                    org = Organization.get_organization(org_uuid)
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.access_event(user, org_name, event_title)
+                    return json.dumps({"response": response})
 
-                    room_id = command['room_id']
-                    room_uuid = uuid.UUID(room_id)
-                    room = org.get_room(room_uuid)
+                 
+                #delete_room(user: str, org: str, room_name: str):
+                elif command['action'] == 'delete_room':
+                    token = command['token']
+                    org_name = command['org_name']
+                    room_name = command['room_name']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.delete_room(user, org_name, room_name)
+                    return json.dumps({"response": response})    
+                
+                
+                #update_room(user: str, room_name: str, org: str, capacity: int, x: int, y: int, working_hours: str):
+                elif command['action'] == 'update_room':
+                    token = command['token']
+                    org_name = command['org_name']
+                    room_name = command['room_name']
+                    capacity = command['capacity']
+                    x = command['x']
+                    y = command['y']
+                    working_hours = command['working_hours']
+                    permissions = command['permissions']
 
-                    permission = Permissions.permission_check([4], room, [1], event)
-                    if permission == False:
-                        return json.dumps({"response": "You don't have permission."})
-
-                    title, description, category, capacity, duration, weekly, permissions
-                    title = command['title']
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.update_room(user, org_name, room_name, capacity, x, y, working_hours, permissions)
+                    return json.dumps({"response": response})
+                
+                
+                #list_room_events(user: str, org: str, room_name: str):
+                elif command['action'] == 'list_room_events':
+                    token = command['token']
+                    org_name = command['org_name']
+                    room_name = command['room_name']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.list_room_events(user, org_name, room_name)
+                    return json.dumps({"response": response})
+                    
+                    
+                #create_reservation(user: str, org: str, room_name: str, event_title: str, start_time: str, duration: int, weekly: bool, description:str):
+                elif command['action'] == 'create_reservation':
+                    token = command['token']
+                    org_name = command['org_name']
+                    room_name = command['room_name']
+                    event_title = command['event_title']
+                    start_time = command['start_time']
+                    duration = command['duration']
+                    weekly = command['weekly']
                     description = command['description']
-                    category = command['category']
+
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.create_reservation(user, org_name, room_name, event_title, start_time, duration, weekly, description)
+                    return json.dumps({"response": response})
+                
+                #create_perreservation(user: str, org: str, room_name: str, event_title: str, start_time: str, duration: int, weekly: bool, description:str):
+                elif command['action'] == 'create_perreservation':
+                    token = command['token']
+                    org_name = command['org_name']
+                    room_name = command['room_name']
+                    event_title = command['event_title']
+                    start_time = command['start_time']
+                    duration = command['duration']
+                    weekly = command['weekly']
+                    description = command['description']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.create_perreservation(user, org_name, room_name, event_title, start_time, duration, weekly, description)
+                    return json.dumps({"response": response})
+                    
+                    
+                #delete_reservation(user: str, org: str, room_name: str, event_title: str, start_time: str):
+                elif command['action'] == 'delete_reservation':
+                    token = command['token']
+                    org_name = command['org_name']
+                    room_name = command['room_name']
+                    event_title = command['event_title']
+                    start_time = command['start_time']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.delete_reservation(user, org_name, room_name, event_title, start_time)
+                    return json.dumps({"response": response})
+                
+                #read_event( org: str, event_title: str):
+                elif command['action'] == 'read_event':
+                    token = command['token']
+                    org_name = command['org_name']
+                    event_title = command['event_title']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.read_event(user, org_name, event_title)
+                    return json.dumps({"response": response})
+
+                #create_event(user: str, org: str, event_title: str, capacity: int, duration: int, weekly: bool, description: str, category: str):
+                elif command['action'] == 'create_event':
+                    token = command['token']
+                    org_name = command['org_name']
+                    event_title = command['event_title']
                     capacity = command['capacity']
                     duration = command['duration']
                     weekly = command['weekly']
-                    permissions = command['permissions']
+                    description = command['description']
+                    category = command['category']
 
-                    event = org.create_organization_event(title, description, category, capacity, duration, weekly, permissions)
-
-                    return json.dumps({"response": "Event successfully created with id: " + str(event.get_id())})
-
-                elif command['action'] == 'list_events':
-                    organization_id = command['organization_id']
-                    org_uuid = uuid.UUID(organization_id)
-                    org = Organization.get_organization(org_uuid)
-
-                    room_id = command['room_id']
-                    room_uuid = uuid.UUID(room_id)
-                    room = org.get_room(room_uuid)
-
-                    permission = Permissions.permission_check([0], room)
-                    if permission == False:
-                        return json.dumps({"response": "You don't have permission."})
-
-                    return json.dumps({"response": room.get_reservations()})
-
-                elif command['action'] == 'reserve': 
-                    organization_id = command['organization_id']
-                    org_uuid = uuid.UUID(organization_id)
-                    org = Organization.get_organization(org_uuid)
-
-                    room_id = command['room_id']
-                    room_uuid = uuid.UUID(room_id)
-                    room = org.get_room(room_uuid)
-
-                    event_id = command['event_id']
-                    event_uuid = uuid.UUID(event_id)
-                    event = org.get_event(event_uuid)
-
-                    start_time = command['start_time']
-
-                    if type(event.weekly) is datetime:
-                        permission = Permissions.permission_check([2], room)
-                    else:
-                        permission = Permissions.permission_check([1], room) or Permissions.permission_check([2], room)
-            
-                    if permission == False:
-                        return json.dumps({"response": "You don't have permission."})
-
-                    org.reserve(event, room, start_time)
-
-                    return json.dumps({"response": room.get_name() + " reserved for event " + event.get_name()})
-
-                elif command['action'] == 'delete_reservations':
-                    organization_id = command['organization_id']
-                    org_uuid = uuid.UUID(organization_id)
-                    org = Organization.get_organization(org_uuid)
-
-                    room_id = command['room id']
-                    room_uuid = uuid.UUID(room_id)
-                    room = org.get_room(room_uuid)
-
-                    if(usermanager.get_current_user() == org.get_owner):
-                        permission = Permissions.permission_check([3], room)
-
-                    else:
-                        reservations = room.get_reservations()
-                        for reservation in reservations:
-                            _,_,event = reservation
-                            permission = Permissions.permission_check([3], room, [1], event)
-                            if permission == False:
-                                return json.dumps({"response": "You don't have permission."})
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
                     
-                    if permission == False:
-                        return json.dumps({"response": "You don't have permission."})
+                    response = views.create_event(user, org_name, event_title, capacity, duration, weekly, description, category)
+                    return json.dumps({"response": response})
 
-                    room.delete_reservations()
-
-                    return json.dumps({"response": "Successfully deleted reservations for room: " + room.get_name()})
-                
-                elif command['action'] == 'read_event':
-                    organization_id = command['organization_id']
-                    org_uuid = uuid.UUID(organization_id)
-                    org = Organization.get_organization(org_uuid)
-
-                    room_id = command['room_id']
-                    room_uuid = uuid.UUID(room_id)
-                    room = org.get_room(room_uuid)
-
-                    event_id = command['event_id']
-                    event_uuid = uuid.UUID(event_id)
-                    event = org.get_event(event_uuid)
-
-                    permission = Permissions.permission_check([0], event)
-                    if permission == False:
-                        return json.dumps({"response": "You don't have permission."})
-
-                    return json.dumps({"response": event.get()})
-
+                #update_event(user: str, org: str, event_title: str, capacity: int, duration: int, weekly: bool, description: str, category: str):
                 elif command['action'] == 'update_event':
-                    organization_id = command['organization_id']
-                    org_uuid = uuid.UUID(organization_id)
-                    org = Organization.get_organization(org_uuid)
-
-                    room_id = command['room_id']
-                    room_uuid = uuid.UUID(room_id)
-                    room = org.get_room(room_uuid)
-
+                    token = command['token']
+                    org_name = command['org_name']
+                    event_title = command['event_title']
+                    capacity = command['capacity']
+                    duration = command['duration']
+                    weekly = command['weekly']
+                    description = command['description']
+                    category = command['category']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.update_event(user, org_name, event_title, capacity, duration, weekly, description, category)
+                    return json.dumps({"response": response})
+                
+                #create_organization_permissions(user: str, org: str, list_permission: bool, add_permission: bool, access_permission: bool, delete_permission: bool):
+                elif command['action'] == 'create_organization_permissions':
+                    token = command['token']
+                    org_name = command['org_name']
+                    list_permission = command['list_permission']
+                    add_permission = command['add_permission']
+                    access_permission = command['access_permission']
+                    delete_permission = command['delete_permission']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.create_organization_permissions(user, org_name, list_permission, add_permission, access_permission, delete_permission)
+                    return json.dumps({"response": response})
+                
+                #create_room_permissions(user: str, org_name: str, room_name: str, list_permission: bool, reserve_permission: bool, perreserve_permission: bool, delete_permission: bool, write_permission: bool):
+                elif command['action'] == 'create_room_permissions':
+                    token = command['token']
+                    org_name = command['org_name']
+                    room_name = command['room_name']
+                    list_permission = command['list_permission']
+                    reserve_permission = command['reserve_permission']
+                    perreserve_permission = command['perreserve_permission']
+                    delete_permission = command['delete_permission']
+                    write_permission = command['write_permission']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.create_room_permissions(user, org_name, room_name, list_permission, reserve_permission, perreserve_permission, delete_permission, write_permission)
+                    return json.dumps({"response": response})
+                
+                #create_event_permissions(user: str, event_id: int, read_permission: bool, write_permission: bool):
+                elif command['action'] == 'create_event_permission':
+                    token = command['token']
                     event_id = command['event_id']
-                    event_uuid = uuid.UUID(event_id)
-                    event = org.get_event(event_uuid)
-
-                    permission = Permissions.permission_check([1], event)
-                    if permission == False:
-                        return json.dumps({"response": "You don't have permission."})
-
-                    kwargs_to_update = {}
-                    if 'title' in command:
-                        kwargs_to_update['title'] = command['title']
-                    if 'description' in command:
-                        kwargs_to_update['description'] = command['description']
-                    if 'category' in command:
-                        kwargs_to_update['category'] = command['category']
-                    if 'capacity' in command:
-                        kwargs_to_update['capacity'] = command['capacity']
-                    if 'duration' in command:
-                        kwargs_to_update['duration'] = command['duration']
-                    if 'weekly' in command:
-                        kwargs_to_update['weekly'] = command['weekly']
-                    if 'permissions' in command:
-                        kwargs_to_update['permissions'] = command['permissions']
-
-                    # Update the room with the provided attributes
-                    try:
-                        org.update_organization_event(event_uuid, **kwargs_to_update)
-                        return json.dumps({"response": "Event successfully updated."})
-                    except ValueError as e:
-                        return json.dumps({"response": str(e)})
-
-                elif command['action'] == 'delete_event':
-                    organization_id = command['organization_id']
-                    org_uuid = uuid.UUID(organization_id)
-                    org = Organization.get_organization(org_uuid)
-
+                    read_permission = command['read_permission']
+                    write_permission = command['write_permission']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                
+                    response = views.create_event_permissions(user, event_id, read_permission, write_permission)
+                    return json.dumps({"response": response})
+                
+                #find_schedule(event_ids, room_id, date, working_hours):
+                elif command['action'] == 'find_schedule':
+                    token = command['token']
+                    event_ids = command['event_ids']
                     room_id = command['room_id']
-                    room_uuid = uuid.UUID(room_id)
-                    room = org.get_room(room_uuid)
-
-                    event_id = command['event_id']
-                    event_uuid = uuid.UUID(event_id)
-                    event = org.get_event(event_uuid)
-
-                    permission = Permissions.permission_check([1], event, [3], room)
-                    if permission == False:
-                        return json.dumps({"response": "You don't have permission."})
-
-                    org.delete_organization_event(event_uuid)
-                    return json.dumps({"response": "Event successfully deleted."})
-
+                    date = command['date']
+                    working_hours = command['working_hours']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                
+                    response = views.find_schedule(event_ids, room_id, date, working_hours)
+                    return json.dumps({"response": response})
+                
+                #roomView(user: str, org: str, start_datetime_str, end_datetime_str):
+                elif command['action'] == 'room_view':
+                    token = command['token']
+                    org_name = command['org_name']
+                    start_datetime_str = command['start_date']
+                    end_datetime_str = command['end_date']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                
+                    response = views.room_view(user, org_name, start_datetime_str, end_datetime_str)
+                    return json.dumps({"response": response})
+                    
         else:
             return json.dumps({"response": "Invalid command"})
 
 
-    """
-    {"action": "add_room", 
-    "organization_id":"71d34c72-cbd9-4e94-8d3c-52045ae584fd",
-    "name": "room1", "x": 10, "y": 20, 
-    "capacity": 1000,"working hours": "09.00-17.00", 
-    "permissions": ["LIST", "RESERVE", "PERRESERVE", "DELETE", "WRITE"]}
-    """
+"""EXAMPLE USAGES"""
 
-    """
-    {"action": "update_room", "organization_id":"71d34c72-cbd9-4e94-8d3c-52045ae584fd","room_id":"b7767821-af31-4a18-a374-ec2b7cec8ba4","name": "conference room"}
-    """
+
+""" 
+!!!!!!!!!!!!!!!!!!!! IMPORTANT !!!!!!!!!!!!!!
+If you do not want to deal with token and user etc, you can use the following token as root token: 226a86d4-254a-44a8-9131-1f7c7694cf7c
+
+
+# login
+{"action": "login", "username": "root", "password": "root"}
+    
+# Register
+{"action": "register", "username": "root", "password": "root", "email": "newuser@email.com", "fullname": "ROOT"}
+
+# Create organization
+{"action": "create_organization", "token": "userToken", "org_name": "NewOrg", "description": "New Organization Description"}
+
+# Update Organization
+{"action": "update_organization", "token": "userToken", "org_name": "ExistingOrg", "field": "description", "value": "Updated Description"}
+
+# List Rooms
+{"action": "list_rooms", "token": "userToken", "org_name": "OrgName"}
+
+# Create Room
+{"action": "create_room", "token": "userToken", "org_name": "OrgName", "room_name": "Room1", "x": 100, "y": 200, "capacity": 50, "working_hours": "09:00-17:00", "permissions": "permissionDetails"}
+
+
+# Access Room
+{"action": "access_room", "token": "userToken", "org_name": "OrgName", "room_name": "Room1"}
+
+# Access Event
+{"action": "access_event", "token": "userToken", "org_name": "OrgName", "event_title": "EventTitle"}
+
+# Delete Room
+{"action": "delete_room", "token": "userToken", "org_name": "OrgName", "room_name": "Room1"}
+
+# Update Room
+{"action": "update_room", "token": "userToken", "org_name": "OrgName", "room_name": "Room1", "capacity": 60, "x": 120, "y": 220, "working_hours": "08:00-18:00", "permissions": "newPermissions"}
+
+# List Room Events
+{"action": "list_room_events", "token": "userToken", "org_name": "OrgName", "room_name": "Room1"}
+
+# Create Reservation
+{"action": "create_reservation", "token": "userToken", "org_name": "OrgName", "room_name": "Room1", "event_title": "Event1", "start_time": "2021-04-01 09:00", "duration": 120, "weekly": false, "description": "Event Description"}
+
+# Delete Reservation
+{"action": "delete_reservation", "token": "userToken", "org_name": "OrgName", "room_name": "Room1", "event_title": "Event1", "start_time": "2021-04-01 09:00"}
+
+# Read Event
+{"action": "read_event", "token": "userToken", "org_name": "OrgName", "event_title": "EventTitle"}
+
+# Create Event
+{"action": "create_event", "token": "your_token", "org_name": "organization1", "event_title": "New Event", "capacity": 50, "duration": 120, "weekly": false, "description": "Event Description", "category": "Event Category"}
+
+# Update Event
+{"action": "update_event", "token": "your_token", "org_name": "organization1", "event_title": "Existing Event", "capacity": 100, "duration": 90, "weekly": true, "description": "Updated Description", "category": "Updated Category"}
+
+# Create Organization Permissions
+{"action": "create_organization_permissions", "token": "your_token", "org_name": "organization1", "list_permission": true, "add_permission": true, "access_permission": true, "delete_permission": true}
+
+# Create Room permissions
+{"action": "create_room_permissions", "token": "your_token", "org_name": "organization1", "room_name": "Room 1", "list_permission": true, "reserve_permission": true, "perreserve_permission": true, "delete_permission": true, "write_permission": true}
+
+# Create Event Permissions
+{"action": "create_event_permission", "token": "your_token", "event_id": 123, "read_permission": true, "write_permission": true}
+
+# Find Schedule
+{"action": "find_schedule", "token": "your_token", "event_ids": [123, 456], "room_id": 789, "date": "2021-04-01", "working_hours": "09:00-17:00"}
+    
+# Room View
+{"action": "room_view", "token": "your_token", "org_name": "organization1", "start_date": "2021-04-01 08:00", "end_date": "2021-04-30 18:00"}
+ 
+"""
+
+    
