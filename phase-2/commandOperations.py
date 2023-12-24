@@ -1,10 +1,5 @@
-import datetime
-import sys
-from threading import Thread, Lock, Condition
-import socket
+from threading import Lock
 import json
-import struct
-import uuid
 import views
 
 class DatabaseLock:
@@ -33,8 +28,12 @@ class CommandOperations:
                 # Parse the actual command as JSON
                 actual_command = json.loads(actual_command_str)
 
+                token = None
+                if 'token' in wrapped_command:
+                    token = wrapped_command['token']
+
                 # Now, process the actual command
-                return CommandOperations.process_actual_command(actual_command)
+                return CommandOperations.process_actual_command(actual_command, token)
             else:
                 return json.dumps({"response": "Invalid command structure"})
 
@@ -42,16 +41,16 @@ class CommandOperations:
             return json.dumps({"response": "Invalid JSON format"})
 
     @staticmethod
-    def process_actual_command(command):
+    def process_actual_command(command, token):
         # Here you process the actual command logic
         #organization = Organization()
         if 'action' in command:
             if command['action'] == 'login':
                 username = command['username']
                 password = command['password']
-                token = views.login(username, password)
-                if token:
-                    return json.dumps({"response": "Login successful and this is your token: ", "token": token })
+                usrtoken = views.login(username, password)
+                if usrtoken:
+                    return json.dumps({"response": "Login successful and this is your token: ", "token": usrtoken })
                 else:
                     return json.dumps({"response": "Login failed"})
 
@@ -72,7 +71,6 @@ class CommandOperations:
                  
                 #create_organization(user: str, org_name: str, description: str):
                 elif command['action'] == 'create_organization':
-                    token = command['token']
                     name = command['org_name']
                     description = command['description']
                     
@@ -87,7 +85,6 @@ class CommandOperations:
                 
                 #update_organization(user: str, org_name, field, value):
                 elif command['action'] == 'update_organization':
-                    token = command['token']
                     org_name = command['org_name']
                     field = command['field']
                     value = command['value']
@@ -101,7 +98,6 @@ class CommandOperations:
                 
                 #list_rooms(user: str, org_name: str):
                 elif command['action'] == 'list_rooms':
-                    token = command['token']
                     org_name = command['org_name']
                     
                     user = process_token(token)
@@ -112,7 +108,6 @@ class CommandOperations:
                 
                 # create_room(user: str, org: str, room_name: str, x: int, y: int, capacity: int, working_hours: str):
                 elif command['action'] == 'create_room':
-                    token = command['token']
                     org_name = command['org_name']
                     room_name = command['room_name']
                     x = command['x']
@@ -125,12 +120,11 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                     
-                    response = views.create_room(user, org_name, room_name, x, y, capacity, working_hours, permissions)
+                    response = views.create_room(user, org_name, room_name, x, y, capacity, working_hours)
                     return json.dumps({"response": response})
                 
                 #access_room(user: str, org: str, room_name: str):
                 elif command['action'] == 'access_room':
-                    token = command['token']
                     org_name = command['org_name']
                     room_name = command['room_name']
 
@@ -143,7 +137,6 @@ class CommandOperations:
                 
                 #access_event(user: str, org: str, event_title: str):
                 elif command['action'] == 'access_event':
-                    token = command['token']
                     org_name = command['org_name']
                     event_title = command['event_title']
 
@@ -157,7 +150,6 @@ class CommandOperations:
                  
                 #delete_room(user: str, org: str, room_name: str):
                 elif command['action'] == 'delete_room':
-                    token = command['token']
                     org_name = command['org_name']
                     room_name = command['room_name']
                     
@@ -171,7 +163,6 @@ class CommandOperations:
                 
                 #update_room(user: str, room_name: str, org: str, capacity: int, x: int, y: int, working_hours: str):
                 elif command['action'] == 'update_room':
-                    token = command['token']
                     org_name = command['org_name']
                     room_name = command['room_name']
                     capacity = command['capacity']
@@ -184,13 +175,12 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                     
-                    response = views.update_room(user, org_name, room_name, capacity, x, y, working_hours, permissions)
+                    response = views.update_room(user, room_name, org_name, capacity, x, y, working_hours)
                     return json.dumps({"response": response})
                 
                 
                 #list_room_events(user: str, org: str, room_name: str):
                 elif command['action'] == 'list_room_events':
-                    token = command['token']
                     org_name = command['org_name']
                     room_name = command['room_name']
                     
@@ -204,7 +194,6 @@ class CommandOperations:
                     
                 #create_reservation(user: str, org: str, room_name: str, event_title: str, start_time: str, duration: int, weekly: bool, description:str):
                 elif command['action'] == 'create_reservation':
-                    token = command['token']
                     org_name = command['org_name']
                     room_name = command['room_name']
                     event_title = command['event_title']
@@ -222,7 +211,6 @@ class CommandOperations:
                 
                 #create_perreservation(user: str, org: str, room_name: str, event_title: str, start_time: str, duration: int, weekly: bool, description:str):
                 elif command['action'] == 'create_perreservation':
-                    token = command['token']
                     org_name = command['org_name']
                     room_name = command['room_name']
                     event_title = command['event_title']
@@ -241,7 +229,6 @@ class CommandOperations:
                     
                 #delete_reservation(user: str, org: str, room_name: str, event_title: str, start_time: str):
                 elif command['action'] == 'delete_reservation':
-                    token = command['token']
                     org_name = command['org_name']
                     room_name = command['room_name']
                     event_title = command['event_title']
@@ -256,7 +243,6 @@ class CommandOperations:
                 
                 #read_event( org: str, event_title: str):
                 elif command['action'] == 'read_event':
-                    token = command['token']
                     org_name = command['org_name']
                     event_title = command['event_title']
                     
@@ -264,12 +250,11 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                     
-                    response = views.read_event(user, org_name, event_title)
+                    response = views.read_event(org_name, event_title)
                     return json.dumps({"response": response})
 
                 #create_event(user: str, org: str, event_title: str, capacity: int, duration: int, weekly: bool, description: str, category: str):
                 elif command['action'] == 'create_event':
-                    token = command['token']
                     org_name = command['org_name']
                     event_title = command['event_title']
                     capacity = command['capacity']
@@ -287,7 +272,6 @@ class CommandOperations:
 
                 #update_event(user: str, org: str, event_title: str, capacity: int, duration: int, weekly: bool, description: str, category: str):
                 elif command['action'] == 'update_event':
-                    token = command['token']
                     org_name = command['org_name']
                     event_title = command['event_title']
                     capacity = command['capacity']
@@ -305,7 +289,6 @@ class CommandOperations:
                 
                 #create_organization_permissions(user: str, org: str, list_permission: bool, add_permission: bool, access_permission: bool, delete_permission: bool):
                 elif command['action'] == 'create_organization_permissions':
-                    token = command['token']
                     org_name = command['org_name']
                     list_permission = command['list_permission']
                     add_permission = command['add_permission']
@@ -321,7 +304,6 @@ class CommandOperations:
                 
                 #create_room_permissions(user: str, org_name: str, room_name: str, list_permission: bool, reserve_permission: bool, perreserve_permission: bool, delete_permission: bool, write_permission: bool):
                 elif command['action'] == 'create_room_permissions':
-                    token = command['token']
                     org_name = command['org_name']
                     room_name = command['room_name']
                     list_permission = command['list_permission']
@@ -339,7 +321,6 @@ class CommandOperations:
                 
                 #create_event_permissions(user: str, event_id: int, read_permission: bool, write_permission: bool):
                 elif command['action'] == 'create_event_permission':
-                    token = command['token']
                     event_id = command['event_id']
                     read_permission = command['read_permission']
                     write_permission = command['write_permission']
@@ -353,7 +334,6 @@ class CommandOperations:
                 
                 #find_schedule(event_ids, room_id, date, working_hours):
                 elif command['action'] == 'find_schedule':
-                    token = command['token']
                     event_ids = command['event_ids']
                     room_id = command['room_id']
                     date = command['date']
@@ -368,7 +348,6 @@ class CommandOperations:
                 
                 #roomView(user: str, org: str, start_datetime_str, end_datetime_str):
                 elif command['action'] == 'room_view':
-                    token = command['token']
                     org_name = command['org_name']
                     start_datetime_str = command['start_date']
                     end_datetime_str = command['end_date']
@@ -377,7 +356,7 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                 
-                    response = views.room_view(user, org_name, start_datetime_str, end_datetime_str)
+                    response = views.roomView(user, org_name, start_datetime_str, end_datetime_str)
                     return json.dumps({"response": response})
                     
         else:
@@ -457,5 +436,3 @@ If you do not want to deal with token and user etc, you can use the following to
 {"action": "room_view", "token": "your_token", "org_name": "organization1", "start_date": "2021-04-01 08:00", "end_date": "2021-04-30 18:00"}
  
 """
-
-    

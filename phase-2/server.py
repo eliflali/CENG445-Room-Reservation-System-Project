@@ -105,7 +105,3 @@ class ReadAgent(Thread):
         finally:
             self.connection.close()
             print(f"Connection closed with {self.address}")
-
-
-
-
