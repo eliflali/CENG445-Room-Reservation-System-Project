@@ -26,14 +26,30 @@
     <form method="post" action="{% url 'command_view' %}">
         {% csrf_token %}
         <label for="command">Enter Command:</label>
-        <input type="text" name="command" placeholder="Enter command">
+        <input type="text" id="command" name="command" placeholder="Enter command">
         <!-- The token is sent as a hidden field within the form -->
         <input type="hidden" name="token" value="{{ token }}">
         <input type="submit" value="Send Command">
     </form>
 
     <script>
-        // JavaScript to handle the form submission and display command results
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        const csrftoken = getCookie('csrftoken'); // Function to get the CSRF token from cookies
+    
         document.querySelector('form').onsubmit = function(event) {
             event.preventDefault();
             var xhr = new XMLHttpRequest();
@@ -46,8 +62,12 @@
             };
             xhr.open('POST', this.action);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send('command=' + document.getElementById('command').value + '&token=' + '{{ token }}');
+            xhr.setRequestHeader('X-CSRFToken', csrftoken); // Set the CSRF token in the request header
+            // Make sure to access the value of the input field correctly
+            var commandInput = document.querySelector('input[name="command"]');
+            xhr.send('command=' + encodeURIComponent(commandInput.value) + '&token=' + encodeURIComponent('{{ token }}'));
         };
     </script>
+    
 </body>
 </html>

@@ -3,6 +3,9 @@ import socket
 import json
 import struct
 from django.http import HttpResponse
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Create your views here.
@@ -22,6 +25,8 @@ def send_command_to_phase2_server(command, token):
         # Establish a socket connection to the Phase 2 server
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((phase2_server_host, phase2_server_port))
+
+            logger.debug(f"Connected to {host} on port {port}")
 
             # Prepare the command dictionary, including the token
             command_dict = {"command": command, "token": token}
@@ -50,9 +55,11 @@ def send_command_to_phase2_server(command, token):
 
 
 def command_view(request):
+    print("command view")
     if request.method == 'POST':
         command = request.POST.get('command')
         token = request.COOKIES.get('token')  # Retrieve the token from cookies
+        print(token)
         
         # Send the command to the Phase 2 server and get the response
         response = send_command_to_phase2_server(command, token)
