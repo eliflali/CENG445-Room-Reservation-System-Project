@@ -44,30 +44,27 @@ class Server():
             writer.start()
 
 class WriteAgent(Thread):
-    def __init__(self,connection, address, command):
+    def __init__(self, connection, address, command):
+        Thread.__init__(self)
         self.connection = connection
         self.address = address
         self.command = command
-        self.lock = Lock()
-        Thread.__init__(self)
 
     def run(self):
-        command = self.command.getCommand()
-        
-        self.connection.sendall(command.encode())
-        notexit = True
-        while notexit:
-            with self.command.lock:
-                if not self.connection:  # Check if connection is closed
-                    break
-                self.command.arrivingCommand.wait()
-            command = self.command.getCommand()
-            if command == "":
-                continue
-            try:
-                self.connection.sendall(command.encode())
-            except:
-                notexit = False
+        try:
+            while True:
+                command = self.command.getCommand()
+                if command:
+                    self.connection.sendall(command.encode())
+                with self.command.lock:
+                    self.command.arrivingCommand.wait()  # Wait for a new command
+        except socket.error as e:
+            print(f"Socket error: {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            self.connection.close()
+
 
 
 

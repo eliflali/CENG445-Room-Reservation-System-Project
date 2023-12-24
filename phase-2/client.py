@@ -20,7 +20,6 @@ def send_command(host, port):
             # Serialize the command to a JSON string and convert to bytes
             command_json = json.dumps({"command": user_input})
             command_bytes = command_json.encode('utf-8')
-            print(command_bytes)
 
             # Calculate the size of the command
             command_size = len(command_bytes)
