@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phase 3 Room Reservation App</title>
+    <script>
+        // JavaScript to refresh the page every 5 minutes (300000 milliseconds)
+        setTimeout(function() {
+            location.reload();
+        }, 300000);
+    </script>
+</head>
+<body>
+    <h1>Room Reservation Map</h1>
+    <p id="commandResult">Result of the last command will be shown here.</p>
+
+    <!-- SVG Map -->
+    <svg height="1024" width="1024">
+        {% for obj in objects %}
+        <text x="{{ obj.x }}" y="{{ obj.y }}" fill="{{ obj.color }}" font-size="10px">{{ obj.name }}</text>
+        <circle cx="{{ obj.x }}" cy="{{ obj.y }}" r="5" fill="{{ obj.color }}"/>
+        {% endfor %}
+    </svg>
+
+    <!-- User command form -->
+    <form action="/path_to_command_handler/" method="post">
+        {% csrf_token %}
+        <label for="command">Enter Command:</label>
+        <input type="text" id="command" name="command">
+        <input type="hidden" name="token" value="{{ token }}">
+        <button type="submit">Send Command</button>
+    </form>
+
+    <script>
+        // JavaScript to handle the form submission and display command results
+        document.querySelector('form').onsubmit = function(event) {
+            event.preventDefault();
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    document.getElementById('commandResult').textContent = xhr.responseText;
+                } else {
+                    document.getElementById('commandResult').textContent = 'Error processing command.';
+                }
+            };
+            xhr.open('POST', this.action);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.send('command=' + document.getElementById('command').value + '&token=' + '{{ token }}');
+        };
+    </script>
+</body>
+</html>
