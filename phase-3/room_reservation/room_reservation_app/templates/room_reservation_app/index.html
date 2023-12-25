@@ -12,9 +12,10 @@
 </head>
 <body>
     <h1>Room Reservation Map</h1>
-    <p id="commandResult">Result of the last command will be shown here.</p>
+    <p id="commandResult">Result of the last command: {{ response_message }}</p>
 
-    <!-- SVG Map -->
+
+    <!-- TODO: SVG Map -->
     <svg height="1024" width="1024">
         {% for obj in objects %}
         <text x="{{ obj.x }}" y="{{ obj.y }}" fill="{{ obj.color }}" font-size="10px">{{ obj.name }}</text>
@@ -55,15 +56,18 @@
             var xhr = new XMLHttpRequest();
             xhr.onload = function() {
                 if (xhr.status === 200) {
-                    document.getElementById('commandResult').textContent = xhr.responseText;
+                    // Parse the JSON response
+                    var response = JSON.parse(xhr.responseText);
+                    // Update the commandResult paragraph with the response message
+                    // Make sure to use the key 'response' as received from the server
+                    document.getElementById('commandResult').textContent = response.response;
                 } else {
                     document.getElementById('commandResult').textContent = 'Error processing command.';
                 }
             };
             xhr.open('POST', this.action);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.setRequestHeader('X-CSRFToken', csrftoken); // Set the CSRF token in the request header
-            // Make sure to access the value of the input field correctly
+            xhr.setRequestHeader('X-CSRFToken', csrftoken);
             var commandInput = document.querySelector('input[name="command"]');
             xhr.send('command=' + encodeURIComponent(commandInput.value) + '&token=' + encodeURIComponent('{{ token }}'));
         };

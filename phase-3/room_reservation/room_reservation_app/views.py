@@ -2,6 +2,7 @@ from django.shortcuts import render
 import socket
 import json
 import struct
+from django.http import JsonResponse
 from django.http import HttpResponse
 import logging
 
@@ -35,7 +36,7 @@ def send_command_to_phase2_server(command, token):
             response_size = struct.unpack('!I', raw_response_size)[0]
             response = sock.recv(response_size).decode('utf-8')
             print(f"Response received: {response}")
-            
+
             return response
     except ConnectionError as e:
         return f"Connection error: {e}"
@@ -48,9 +49,18 @@ def command_view(request):
     if request.method == 'POST':
         command = request.POST.get('command')
         token = request.COOKIES.get('token')
-        
-        response = send_command_to_phase2_server(command, token)
-        
-        return render(request, 'room_reservation_app/index.html', {'response': response, 'token': token})
+
+        response_json_string = send_command_to_phase2_server(command, token)
+        print(response_json_string)
+        try:
+            # Parse the JSON response
+            response_data = json.loads(response_json_string)
+        except json.JSONDecodeError:
+            # If response is not in JSON format, create a default response
+            response_data = {'response': 'Invalid response from server'}
+
+        # Return a JsonResponse to the AJAX request
+        return JsonResponse(response_data)
     else:
+        # For non-POST requests, just render the empty form
         return render(request, 'room_reservation_app/index.html')
