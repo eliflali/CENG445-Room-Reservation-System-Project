@@ -44,17 +44,19 @@ def send_command_to_phase2_server(command, token):
         return f"Pack/Unpack error: {e}"
     except Exception as e:
         return f"An error occurred: {e}"
-
+"""
 def command_view(request):
     if request.method == 'POST':
         command = request.POST.get('command')
         token = request.COOKIES.get('token')
 
         response_json_string = send_command_to_phase2_server(command, token)
-        print(response_json_string)
+        
+        response_json_string = '{"re'+response_json_string
         try:
             # Parse the JSON response
             response_data = json.loads(response_json_string)
+            print(response_data)
         except json.JSONDecodeError:
             # If response is not in JSON format, create a default response
             response_data = {'response': 'Invalid response from server'}
@@ -64,3 +66,47 @@ def command_view(request):
     else:
         # For non-POST requests, just render the empty form
         return render(request, 'room_reservation_app/index.html')
+
+
+#for SVG map to render:
+def map_view(request):
+    objects = [
+        {'name': 'Object1', 'x': 100, 'y': 150, 'color': 'red'},
+        {'name': 'Object2', 'x': 200, 'y': 50, 'color': 'blue'},
+        {'name': 'Object2', 'x': 150, 'y': 100, 'color': 'green'},
+        # ... more objects ...
+    ]
+    context = {
+        'objects': objects,
+        # ... other context variables ...
+    }
+    return render(request, 'room_reservation_app/index.html', context)
+"""
+
+def combined_view(request):
+    objects = [
+        {'name': 'Object1', 'x': 100, 'y': 150, 'color': 'red'},
+        {'name': 'Object2', 'x': 200, 'y': 50, 'color': 'blue'},
+        {'name': 'Object3', 'x': 150, 'y': 100, 'color': 'green'},
+        # ... more objects ...
+    ]
+    response_message = ""
+    token = request.COOKIES.get('token', '')
+
+    if request.method == 'POST':
+        command = request.POST.get('command')
+        response_json_string = send_command_to_phase2_server(command, token)
+        try:
+            response_data = json.loads(response_json_string)
+            response_message = response_data.get('response', 'Invalid response from server')
+            token = response_data.get('token', token)
+        except json.JSONDecodeError:
+            response_message = 'Invalid response from server'
+
+    context = {
+        'objects': objects,
+        'response_message': response_message,
+        'token': token
+    }
+    return render(request, 'room_reservation_app/index.html', context)
+
