@@ -5,8 +5,10 @@ import struct
 from django.http import JsonResponse
 from django.http import HttpResponse
 import logging
+from django.shortcuts import redirect
 import requests
 from django.views.decorators.csrf import csrf_exempt
+from .decorators import login_required  # Import the decorator
 
 
 logger = logging.getLogger(__name__)
@@ -38,6 +40,7 @@ def send_command_to_phase2_server(command, token):
 
             response_size = struct.unpack('!I', raw_response_size)[0]
             response = sock.recv(response_size).decode('utf-8')
+            response = '{"re' + response
             print(f"Response received: {response}")
 
             return response
@@ -47,6 +50,44 @@ def send_command_to_phase2_server(command, token):
         return f"Pack/Unpack error: {e}"
     except Exception as e:
         return f"An error occurred: {e}"
+    
+def login_view(request):
+    return render(request, 'login.html')
+
+
+@csrf_exempt
+def execute_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        # Prepare the command to send to the phase2 server
+        command = {
+            "action": "login",
+            "username": username,
+            "password": password
+        }
+
+        # Send the command to the phase2 server
+        response = send_command_to_phase2_server(json.dumps(command), None)
+
+        try:
+            response_data = json.loads(response)
+            if 'response' in response_data and 'token' in response_data:
+                # Store the token in the user's session
+                request.session['token'] = response_data['token']
+                
+                # Instead of redirecting, return a JSON response with the redirect URL
+                return JsonResponse({'redirect': '/command-center/'})
+            else:
+                # Return a JSON response indicating invalid credentials
+                return JsonResponse({'error': 'Invalid credentials'}, status=401)
+        except json.JSONDecodeError:
+            # Return a JSON response indicating failure to decode server response
+            return JsonResponse({'error': 'Failed to decode response from server'}, status=500)
+
+    # Return a JSON response for invalid requests
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 """
 def command_view(request):
     if request.method == 'POST':
@@ -117,6 +158,7 @@ def combined_view(request):
 
 
 @csrf_exempt  # To bypass CSRF token verification for demonstration purposes
+@login_required  # Apply the decorator to the view
 def command_center(request):
     if request.method == 'POST':
         action = request.POST.get('command')
