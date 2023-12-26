@@ -10,11 +10,12 @@ import requests
 from django.views.decorators.csrf import csrf_exempt
 from .decorators import login_required  # Import the decorator
 
-
 logger = logging.getLogger(__name__)
+
 
 def index(request):
     return render(request, 'index.html')
+
 
 def send_command_to_phase2_server(command, token):
     phase2_server_host = 'localhost'
@@ -50,7 +51,8 @@ def send_command_to_phase2_server(command, token):
         return f"Pack/Unpack error: {e}"
     except Exception as e:
         return f"An error occurred: {e}"
-    
+
+
 def login_view(request):
     return render(request, 'login.html')
 
@@ -76,7 +78,7 @@ def execute_login(request):
             if 'response' in response_data and 'token' in response_data:
                 # Store the token in the user's session
                 request.session['token'] = response_data['token']
-                
+
                 # Instead of redirecting, return a JSON response with the redirect URL
                 return JsonResponse({'redirect': '/command-center/'})
             else:
@@ -89,9 +91,42 @@ def execute_login(request):
     # Return a JSON response for invalid requests
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
+
+@csrf_exempt  # Be mindful of CSRF in production
 def register_view(request):
-    # Registration logic goes here
-    return render(request, 'register.html')
+    # Handle GET request to serve the registration page
+    if request.method == 'GET':
+        return render(request, 'register.html')
+
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')  # If you're including email in the registration process
+        password = request.POST.get('password')
+        fullname = request.POST.get('fullname')
+
+        # Prepare the command to send to the phase2 server
+        command = {
+            "action": "register",
+            "username": username,
+            "email": email,  # Include this if your backend expects it
+            "password": password,
+            "fullname": fullname
+        }
+
+        # Send the command to the phase2 server
+        response = send_command_to_phase2_server(json.dumps(command), None)
+
+        try:
+            response_data = json.loads(response)
+            # Assuming the phase2 server returns a JSON response
+            return JsonResponse(response_data)
+        except json.JSONDecodeError:
+            # Error handling if the response is not JSON or is malformed
+            return JsonResponse({'error': 'Failed to decode response from server'}, status=500)
+
+    # Handle non-POST requests or other errors
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
 
 def combined_view(request):
     objects = [
@@ -121,8 +156,6 @@ def combined_view(request):
     return render(request, 'index.html', context)
 
 
-
-
 @csrf_exempt  # To bypass CSRF token verification for demonstration purposes
 @login_required  # Apply the decorator to the view
 def command_center(request):
@@ -141,7 +174,7 @@ def command_center(request):
 
         # Sending the request to the backend server
         response = requests.post('http://127.0.0.1:12345', json=data)
-        
+
         # Process the response (assuming it's JSON)
         if response.ok:
             response_data = response.json()
@@ -152,6 +185,7 @@ def command_center(request):
 
     # For GET requests, or if the form is not submitted
     return render(request, 'command_center.html')
+
 
 @csrf_exempt  # If CSRF protection is enabled, you'll need to handle CSRF token.
 def execute_command(request):
@@ -178,12 +212,6 @@ def execute_command(request):
             return render(request, 'error_template.html', {'error': str(e)})
 
     return render(request, 'command_center.html')
-
-
-
-
-
-
 
 
 """

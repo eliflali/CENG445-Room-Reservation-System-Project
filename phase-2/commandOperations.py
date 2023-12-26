@@ -439,7 +439,7 @@ If you do not want to deal with token and user etc, you can use the following to
 {"action": "login", "username": "root", "password": "root"}
     
 # Register
-{"action": "register", "username": "root", "password": "root", "email": "newuser@email.com", "fullname": "ROOT"}
+{"action": "register", "username": "root1", "password": "root1", "email": "newuser@email.com", "fullname": "ROOT"}
 
 # Create organization
 {"action": "create_organization", "token": "userToken", "org_name": "NewOrg", "description": "New Organization Description"}
