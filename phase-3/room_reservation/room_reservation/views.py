@@ -88,44 +88,10 @@ def execute_login(request):
 
     # Return a JSON response for invalid requests
     return JsonResponse({'error': 'Invalid request'}, status=400)
-"""
-def command_view(request):
-    if request.method == 'POST':
-        command = request.POST.get('command')
-        token = request.COOKIES.get('token')
 
-        response_json_string = send_command_to_phase2_server(command, token)
-        
-        response_json_string = '{"re'+response_json_string
-        try:
-            # Parse the JSON response
-            response_data = json.loads(response_json_string)
-            print(response_data)
-        except json.JSONDecodeError:
-            # If response is not in JSON format, create a default response
-            response_data = {'response': 'Invalid response from server'}
-
-        # Return a JsonResponse to the AJAX request
-        return JsonResponse(response_data)
-    else:
-        # For non-POST requests, just render the empty form
-        return render(request, 'index.html')
-
-
-#for SVG map to render:
-def map_view(request):
-    objects = [
-        {'name': 'Object1', 'x': 100, 'y': 150, 'color': 'red'},
-        {'name': 'Object2', 'x': 200, 'y': 50, 'color': 'blue'},
-        {'name': 'Object2', 'x': 150, 'y': 100, 'color': 'green'},
-        # ... more objects ...
-    ]
-    context = {
-        'objects': objects,
-        # ... other context variables ...
-    }
-    return render(request, 'index.html', context)
-"""
+def register_view(request):
+    # Registration logic goes here
+    return render(request, 'register.html')
 
 def combined_view(request):
     objects = [
@@ -212,3 +178,49 @@ def execute_command(request):
             return render(request, 'error_template.html', {'error': str(e)})
 
     return render(request, 'command_center.html')
+
+
+
+
+
+
+
+
+"""
+def command_view(request):
+    if request.method == 'POST':
+        command = request.POST.get('command')
+        token = request.COOKIES.get('token')
+
+        response_json_string = send_command_to_phase2_server(command, token)
+        
+        response_json_string = '{"re'+response_json_string
+        try:
+            # Parse the JSON response
+            response_data = json.loads(response_json_string)
+            print(response_data)
+        except json.JSONDecodeError:
+            # If response is not in JSON format, create a default response
+            response_data = {'response': 'Invalid response from server'}
+
+        # Return a JsonResponse to the AJAX request
+        return JsonResponse(response_data)
+    else:
+        # For non-POST requests, just render the empty form
+        return render(request, 'index.html')
+
+
+#for SVG map to render:
+def map_view(request):
+    objects = [
+        {'name': 'Object1', 'x': 100, 'y': 150, 'color': 'red'},
+        {'name': 'Object2', 'x': 200, 'y': 50, 'color': 'blue'},
+        {'name': 'Object2', 'x': 150, 'y': 100, 'color': 'green'},
+        # ... more objects ...
+    ]
+    context = {
+        'objects': objects,
+        # ... other context variables ...
+    }
+    return render(request, 'index.html', context)
+"""

@@ -74,7 +74,22 @@
         margin-top: 10px;
       }
 
-      /* Add any additional CSS here */
+      .register-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        padding: 10px 15px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .register-btn:hover {
+        background-color: #218838;
+      }
     </style>
     <script>
       function handleLogin(event) {
@@ -112,6 +127,10 @@
     </script>
   </head>
   <body>
+    <div>
+      <a href="/register/" class="register-btn">Register</a>
+    </div>
+
     <h1>Login</h1>
     <form id="loginForm" onsubmit="handleLogin(event)">
       <div>

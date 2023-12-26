@@ -24,4 +24,5 @@ urlpatterns = [
     path('command-center/', views.command_center, name='command_center'),
     path('login/', views.login_view, name='login'),
     path('execute-login/', views.execute_login, name='execute_login'),
+    path('register/', views.register_view, name='register'),
 ]
