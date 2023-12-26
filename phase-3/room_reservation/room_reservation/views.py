@@ -5,15 +5,18 @@ import struct
 from django.http import JsonResponse
 from django.http import HttpResponse
 import logging
+import requests
+from django.views.decorators.csrf import csrf_exempt
+
 
 logger = logging.getLogger(__name__)
 
 def index(request):
-    return render(request, 'room_reservation_app/index.html')
+    return render(request, 'index.html')
 
 def send_command_to_phase2_server(command, token):
     phase2_server_host = 'localhost'
-    phase2_server_port = 1423
+    phase2_server_port = 12345
 
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -65,7 +68,7 @@ def command_view(request):
         return JsonResponse(response_data)
     else:
         # For non-POST requests, just render the empty form
-        return render(request, 'room_reservation_app/index.html')
+        return render(request, 'index.html')
 
 
 #for SVG map to render:
@@ -80,7 +83,7 @@ def map_view(request):
         'objects': objects,
         # ... other context variables ...
     }
-    return render(request, 'room_reservation_app/index.html', context)
+    return render(request, 'index.html', context)
 """
 
 def combined_view(request):
@@ -108,5 +111,62 @@ def combined_view(request):
         'response_message': response_message,
         'token': token
     }
-    return render(request, 'room_reservation_app/index.html', context)
+    return render(request, 'index.html', context)
 
+
+
+
+@csrf_exempt  # To bypass CSRF token verification for demonstration purposes
+def command_center(request):
+    if request.method == 'POST':
+        action = request.POST.get('command')
+
+        # Constructing the data to be sent based on the action
+        data = {'action': action}
+        if action == 'login':
+            data['username'] = request.POST.get('username')
+            data['password'] = request.POST.get('password')
+        elif action == 'create_organization':
+            data['token'] = request.POST.get('token')
+            data['org_name'] = request.POST.get('org_name')
+            data['description'] = request.POST.get('description')
+
+        # Sending the request to the backend server
+        response = requests.post('http://127.0.0.1:12345', json=data)
+        
+        # Process the response (assuming it's JSON)
+        if response.ok:
+            response_data = response.json()
+            # You can process and visualize the response data as needed
+            return render(request, 'response_template.html', {'response_data': response_data})
+        else:
+            return render(request, 'error_template.html', {'error': 'Error communicating with the backend server'})
+
+    # For GET requests, or if the form is not submitted
+    return render(request, 'command_center.html')
+
+@csrf_exempt  # If CSRF protection is enabled, you'll need to handle CSRF token.
+def execute_command(request):
+    if request.method == 'POST':
+        # Extract data from the form
+        action = request.POST.get('command')
+        data = {'action': action}
+
+        # Additional data based on action
+        if action in ['login', 'register']:
+            data['username'] = request.POST.get('username')
+            data['password'] = request.POST.get('password')
+        elif action in ['create_organization', 'update_organization']:
+            data['token'] = request.POST.get('token')
+            data['org_name'] = request.POST.get('org_name')
+            data['description'] = request.POST.get('description')
+
+        # Send data to the backend server
+        try:
+            response = requests.post('http://127.0.0.1:12345', json=data)
+            response.raise_for_status()
+            return render(request, 'response_template.html', {'response_data': response.json()})
+        except requests.RequestException as e:
+            return render(request, 'error_template.html', {'error': str(e)})
+
+    return render(request, 'command_center.html')

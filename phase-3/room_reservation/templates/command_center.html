@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Command Center</title>
+  </head>
+  <body>
+    <h1>Command Center</h1>
+    <form action="/execute-command/" method="post">
+      {% csrf_token %}
+      <div>
+        <label for="command">Choose a Command:</label>
+        <select name="command" id="command">
+          <option value="login">Login</option>
+          <option value="register">Register</option>
+          <option value="create_organization">Create Organization</option>
+          <option value="update_organization">Update Organization</option>
+        </select>
+      </div>
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" />
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" />
+      </div>
+      <div>
+        <label for="token">Token:</label>
+        <input type="text" id="token" name="token" />
+      </div>
+      <div>
+        <label for="org_name">Organization Name:</label>
+        <input type="text" id="org_name" name="org_name" />
+      </div>
+      <div>
+        <label for="description">Description:</label>
+        <input type="text" id="description" name="description" />
+      </div>
+      <button type="submit">Execute Command</button>
+    </form>
+  </body>
+</html>
