@@ -13,6 +13,7 @@
 <body>
     <h1>Room Reservation Map</h1>
     <p id="commandResult">Result of the last command: {{ response_message }}</p>
+    <p id = "token">Token: {{ token }}</p>
 
 
     <!-- TODO: SVG Map -->
@@ -23,8 +24,9 @@
         {% endfor %}
     </svg>
 
+    
     <!-- User command form -->
-    <form method="post" action="{% url 'command_view' %}">
+    <form method="post" action="{% url 'combined_view' %}">
         {% csrf_token %}
         <label for="command">Enter Command:</label>
         <input type="text" id="command" name="command" placeholder="Enter command">
@@ -61,6 +63,7 @@
                     // Update the commandResult paragraph with the response message
                     // Make sure to use the key 'response' as received from the server
                     document.getElementById('commandResult').textContent = response.response;
+                    document.getElementById('token').textContent = response.token;
                 } else {
                     document.getElementById('commandResult').textContent = 'Error processing command.';
                 }
