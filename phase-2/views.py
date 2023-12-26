@@ -23,6 +23,7 @@ class DatabaseProps(metaclass=SingletonMeta):
         self.organization_permissions = new_models.OrganizationPermissionsManager("project.db")
         self.room_permissions = new_models.RoomPermissionsManager("project.db")
         self.event_permissions = new_models.EventPermissionsManager("project.db")
+        self.notification_manager = new_models.ObservationManager("project.db")
 
 DB_MANAGER = DatabaseProps()
 
@@ -41,7 +42,7 @@ def register(username, password, email, fullname):
 
 ##added
 def login(username, password):
-    token = DB_MANAGER.user_manager.authenticate_user(username, password)
+    token = DB_MANAGER.user_manager.authenticate_user(username, password)        
     return  token if token else False
 
 def logout(user: str):
@@ -68,6 +69,12 @@ def update_organization(user: str, org_name, field, value):
         return f"Organization {org_name} updated with {field} = {value}"
 
     return "You don't have permission."
+
+def list_organizations(user: str) -> list:
+    """Returns a list of all the organizations to the user"""
+    # first check if the user has permission to view the organizations
+    organizations = DB_MANAGER.org_manager.get_all_organizations()
+    return organizations if organizations else []
 
 ##deleted user parameter
 def list_rooms(user: str, org_name: str):
@@ -174,7 +181,7 @@ def create_reservation(user: str, org: str, room_name: str, event_title: str, st
         
         if DB_MANAGER.reservation_manager.is_room_available(room_id, start_time, duration):
             
-            DB_MANAGER.reservation_manager.create_reservation(room_id, event_id, user, start_time, duration, weekly, description)
+            DB_MANAGER.reservation_manager.create_reservation(room_id, event_id, user, start_time, duration, weekly, description)    
             return room_name + " reserved for event " + event_title
         else:
             return "Room is already occupied for that time slot."
@@ -385,19 +392,9 @@ def roomView(user: str, org: str, start_datetime_str, end_datetime_str):
     return room_events_report if room_events_report else "No rooms found for the specified datetime range."
 
 
-""" print(register("user1", "password", "email", "fullname"))
-print(create_organization_permissions("user1", "org1", True, True, True, True))
-print(create_organization("user1", "org1", "description"))
-print(create_room("user1", "org1", "room1", 10, 10, 100, "08:00-18:00"))
-room_id = DB_MANAGER.room_manager.get_room_id("room1", "org1")
-print(create_room_permissions("user1", room_id, True, True, True, True, True))
+def notify_user(room_id: int, event_id: int):
+    return DB_MANAGER.notification_manager.get_users_for_room(room_id) if room_id else DB_MANAGER.notification_manager.get_users_for_event(event_id)
 
-print(create_event("user1", "org1", "event1", 100, 60, False, "description", "category"))
-print(create_reservation("user1", "org1", "room1", "event1", "2021-04-01 08:00", 60, False, "description")) """
-
-
-""" 
-print(find_schedule([1], 1, "2021-04-01", "08:00-18:00"))
-
-report = roomView("user1", "org1", "2021-04-01 08:00", "2021-04-30 18:00")
-print(report) """
+def attach_observer(user: str, room_id: int, event_id: int):
+    DB_MANAGER.notification_manager.create_observation(user, room_id, event_id, "ROOM")
+    return f"User {user} is now observing room {room_id}."

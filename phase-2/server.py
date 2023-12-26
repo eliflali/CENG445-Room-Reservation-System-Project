@@ -2,6 +2,7 @@ from threading import Thread, Lock, Condition
 import socket
 import struct
 from commandOperations import CommandOperations
+import json
 
 
 class Command:
@@ -44,27 +45,40 @@ class Server():
             writer.start()
 
 class WriteAgent(Thread):
-    def __init__(self, connection, address, command):
-        Thread.__init__(self)
+    def __init__(self,connection, address, command):
         self.connection = connection
         self.address = address
         self.command = command
+        self.lock = Lock()
+        self.user = None
+        Thread.__init__(self)
 
     def run(self):
-        try:
-            while True:
-                command = self.command.getCommand()
-                if command:
-                    self.connection.sendall(command.encode())
-                with self.command.lock:
-                    self.command.arrivingCommand.wait()  # Wait for a new command
-        except socket.error as e:
-            print(f"Socket error: {e}")
-        except Exception as e:
-            print(f"An error occurred: {e}")
-        finally:
-            self.connection.close()
+        command = self.command.getCommand()
+        
+        self.connection.sendall(command.encode())
+        notexit = True
+        while notexit:
+            with self.command.lock:
+                if not self.connection:  # Check if connection is closed
+                    break
+                self.command.arrivingCommand.wait()
+            command = self.command.getCommand()
+            if command == "":
+                continue
+            
+            cmd = json.loads(command)
+            print(cmd)
+            if cmd['response'] == "Login successful and this is your token: ":
+                self.user = CommandOperations.get_user(cmd['token'])
 
+            
+            try:
+                self.connection.sendall(command.encode())
+                if CommandOperations.send_notify(self.user):
+                    self.connection.sendall("You have notifications".encode())
+            except:
+                notexit = False
 
 
 
@@ -73,6 +87,7 @@ class ReadAgent(Thread):
         self.connection = connection
         self.address = address
         self.command = command
+        self.user_token = None
         Thread.__init__(self)
 
     def run(self):
@@ -82,7 +97,7 @@ class ReadAgent(Thread):
                 # Read the size of the command -- an binary encoded int
                 if not self.connection:  # Check if connection is closed
                     exit(1)
-                    break
+
                 raw_size = self.connection.recv(4)
                 if not raw_size:
                     break
@@ -97,6 +112,11 @@ class ReadAgent(Thread):
                 
                 print(f"Received command: {command}")
                 command = CommandOperations.process_command(command)
+                
+                cmd = json.loads(command)
+                if cmd['response'] == "Login successful and this is your token: ":
+                    self.user_token = cmd['token']
+                    
                 self.command.newCommand(command)
 
         finally:

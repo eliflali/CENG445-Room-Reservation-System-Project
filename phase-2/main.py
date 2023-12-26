@@ -16,10 +16,11 @@ if __name__ == "__main__":
 """
 {"action": "register", "username": "johndoe", "password": "password123", "email": "johndoe@email.com", "fullname": "John Doe"}
 
-{"action": "login", "username": "johndoe", "password": "password123"}
+{"action": "login", "username": "root", "password": "root"}
 
 {"action": "create_organization", "name": "Pera Hotel", "permissions": ["LIST", "ADD", "ACCESS", "DELETE"], "description": "nice"}
 
+{"action": "list_organizations", "token": "bd120e25-85f3-433e-a740-59a60c00f15b"}
 
 {"action": "add_room", "organization": "Pera Hotel", "name": "Conference Room", "x": 10, "y": 20, "capacity": 2, "working hours": "09.00-17.00", "permissions": ["LIST", "RESERVE", "PERRESERVE", "DELETE", "WRITE"]}
 

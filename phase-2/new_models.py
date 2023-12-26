@@ -622,3 +622,64 @@ class ReservationManager(DBManager):
         return [{"id": row[0], "room_id": row[1], "event_id": row[2], "user": row[3], "start_time": row[4], "duration": row[5], "weekly": row[6], "description": row[7]} for row in result] if result else None
     
     
+class ObservationManager(DBManager):
+    def __init__(self, db_path: str) -> None:
+        super().__init__(db_path)
+        self._create_observations_table()
+        
+    def _create_observations_table(self) -> None:
+        self._execute_query("""
+            CREATE TABLE IF NOT EXISTS observations (
+                username TEXT NOT NULL,
+                room_id INTEGER,
+                event_id INTEGER,
+                observation_type TEXT NOT NULL,
+                FOREIGN KEY(username) REFERENCES users(username) ON DELETE CASCADE,
+                FOREIGN KEY(room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+                FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE
+            );
+        """)
+    
+    def create_observation(self, username: int, room_id: int, event_id: int, observation_type: str) -> None:
+        """
+        Args:
+            username (str): The name of the user making the observation.
+            room_id (int): The ID of the room being observed.
+            event_id (int): The ID of the event being observed.
+            observation_type (str): The type of observation being made. Must be one of "ROOM", "EVENT"
+            
+        Returns:
+            bool: True if the observation was successfully created, False otherwise.
+        """
+        try:
+            self._execute_query("""
+                INSERT INTO observations (username, room_id, event_id, observation_type)
+                VALUES (?, ?, ?, ?);
+            """, (username, room_id, event_id, observation_type))
+        except sqlite3.IntegrityError:
+            return False
+        return True
+    
+    def delete_observation(self, username: str, room_id: int, event_id: int) -> None:
+        # If room_id and event_id are None, delete all observations for the user
+        if room_id is None and event_id is None:
+            self._execute_query("""DELETE FROM observations WHERE username = ?;""", (username,))
+        # If room_id is None, delete all observations for the user and event
+        elif room_id is None:
+            self._execute_query("""DELETE FROM observations WHERE username = ? AND event_id = ?;""", (username, event_id))
+        # If event_id is None, delete all observations for the user and room
+        elif event_id is None:
+            self._execute_query("""DELETE FROM observations WHERE username = ? AND room_id = ?;""", (username, room_id))
+    
+    def get_observations_for_user(self, username: int) -> list:
+        result = self._execute_query_with_result("""SELECT * FROM observations WHERE username = ?;""", (username,))
+        return [{"username": row[0], "room_id": row[1], "event_id": row[2], "observation_type": row[3]} for row in result] if result else None
+    
+    def get_users_for_room(self, room_id: int) -> list:
+        result = self._execute_query_with_result("""SELECT username FROM observations WHERE room_id = ? AND observation_type = ROOM;""", (room_id,))
+        return [row[0] for row in result] if result else None
+        
+    
+    def get_users_for_event(self, event_id: int) -> list:
+        result = self._execute_query_with_result("""SELECT username FROM observations WHERE event_id = ? AND observation_type = EVENT;""", (event_id,))
+        return [row[0] for row in result] if result else None
