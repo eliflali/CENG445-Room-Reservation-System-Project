@@ -65,8 +65,25 @@
         color: red;
         text-align: center;
         margin-top: 10px;
-      } /* Add
-    any additional CSS here */
+      }
+      .back-to-login-btn {
+        width: 100%;
+        padding: 10px;
+        margin-top: 20px;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        text-align: center;
+        text-decoration: none; /* Remove underline from link */
+        display: inline-block; /* Align similar to button */
+      }
+
+      .back-to-login-btn:hover {
+        background-color: #0056b3;
+      }
     </style>
     <script>
       function handleRegistration(event) {
@@ -131,5 +148,8 @@
       <button type="submit">Register</button>
     </form>
     <div id="registerError"></div>
+    <div style="text-align: center">
+      <a href="/login/" class="back-to-login-btn">Back to Login</a>
+    </div>
   </body>
 </html>

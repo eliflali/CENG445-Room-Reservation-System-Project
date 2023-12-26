@@ -155,6 +155,27 @@ def combined_view(request):
     }
     return render(request, 'index.html', context)
 
+# TODO: make all of the command operations.
+def create_organization(request):
+    """
+    This function called by command-center.
+    It will create an organization.
+    """
+    token = request.session['token']
+
+    data = {'action': 'create_organization'}
+    data['org_name'] = request.POST.get('organization_name')
+    data['description'] = request.POST.get('description')
+
+    response = send_command_to_phase2_server(json.dumps(data), token)
+
+    try:
+        response_message = json.loads(response)
+        response_data = response_message.get('response', 'Invalid response from server')
+        return render('response_template.html', response_data)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Failed to decode response from server'}, status=500)
+
 
 @csrf_exempt  # To bypass CSRF token verification for demonstration purposes
 @login_required  # Apply the decorator to the view
