@@ -56,7 +56,7 @@ def create_organization(user: str, org_name: str, description: str):
     if DB_MANAGER.organization_permissions.get_add_permission(user, org_name):
         # create the organization for the user
         if DB_MANAGER.org_manager.create_organization(org_name, description, user):
-            return org_name + " created with user privilage: " + user
+            return org_name + " created with owner: " + user
         else:
             return "Organization already exists."
     

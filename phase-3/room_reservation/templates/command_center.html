@@ -6,7 +6,7 @@
   </head>
   <body>
     <h1>Command Center</h1>
-    <form action="/execute-command/" method="post">
+    <form action="/command-center/" method="post">
       {% csrf_token %}
       <div>
         <label for="command">Choose a Command:</label>
@@ -26,9 +26,15 @@
           <option value="access_event">Get Event</option>
           <option value="create_event">Create a New Event</option>
           <option value="update_event">Update Event</option>
-          <option value="create_organization_permissions">Get Permissions for Organization</option>
-          <option value="creat_room_permissions">Get Permissions for Room</option>
-          <option value="create_event_permission">Get Permissions for Event</option>
+          <option value="create_organization_permissions">
+            Get Permissions for Organization
+          </option>
+          <option value="creat_room_permissions">
+            Get Permissions for Room
+          </option>
+          <option value="create_event_permission">
+            Get Permissions for Event
+          </option>
           <option value="find_schedule">Find Schedule</option>
           <option value="room_view">Room View</option>
         </select>
@@ -41,6 +47,40 @@
         <label for="description">Description:</label>
         <input type="text" id="description" name="description" />
       </div>
+      <fieldset>
+        <legend>Permissions:</legend>
+        <div>
+          <input
+            type="checkbox"
+            id="perm_list"
+            name="permissions"
+            value="list"
+          />
+          <label for="perm_list">List Permission</label>
+        </div>
+        <div>
+          <input type="checkbox" id="perm_add" name="permissions" value="add" />
+          <label for="perm_add">Add Permission</label>
+        </div>
+        <div>
+          <input
+            type="checkbox"
+            id="perm_access"
+            name="permissions"
+            value="access"
+          />
+          <label for="perm_access">Access Permission</label>
+        </div>
+        <div>
+          <input
+            type="checkbox"
+            id="perm_delete"
+            name="permissions"
+            value="delete"
+          />
+          <label for="perm_delete">Delete Permission</label>
+        </div>
+      </fieldset>
       <button type="submit">Execute Command</button>
     </form>
   </body>
