@@ -352,8 +352,13 @@ class OrganizationManager(DBManager):
         return [{"id": row[0], "title": row[1], "description": row[2], "category": row[3], "capacity": row[4], "duration": row[5], "weekly": row[6], "permissions": row[7], "organization": row[8]} for row in result] if result else None
 
     def update_organization(self, name: str, field: str, value: str) -> None:
-        self._execute_query("""UPDATE organizations SET ? = ? WHERE name = ?;""", (field, value, name))
-    
+        print(f"Updating organization {name} field {field} to {value}")
+        allowed_fields = ["name", "description", "owner"]  # Add other valid fields as needed
+        if field not in allowed_fields:
+            raise ValueError("Invalid field name")
+
+        query = f"UPDATE organizations SET {field} = ? WHERE name = ?;"
+        self._execute_query(query, (value, name))
     
     
 class RoomManager(DBManager):
