@@ -242,8 +242,24 @@ def update_organization(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid field name or something went wrong in phase-2 server while updating organization.'}, status=500)
 
+@csrf_exempt
+def list_organizations(request):
+    """
+    This endpoint will list all the rooms.
+    """
+    token = request.session['token']
 
+    data = {'action': 'list_organizations'}
+    response = send_command_to_phase2_server(data, token)
 
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from')
+        context = {'organizations': response_message, 'title': 'List Organizations'}
+
+        return render(request, 'list_organizations.html', context)
+    except:
+        return JsonResponse({'error': 'Something went wrong while list organizations'}, status=500)
 @csrf_exempt
 def process_request(request):
     """
@@ -259,6 +275,8 @@ def process_request(request):
         return create_organization(request)
     elif command == 'update_organization':
         return update_organization(request)
+    elif command == 'list_organizations':
+        return list_organizations(request)
     else:
         return JsonResponse({'error': ''})
 
