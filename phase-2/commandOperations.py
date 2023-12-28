@@ -442,7 +442,7 @@ If you do not want to deal with token and user etc, you can use the following to
 {"action": "register", "username": "root1", "password": "root1", "email": "newuser@email.com", "fullname": "ROOT"}
 
 # Create organization
-{"action": "create_organization", "token": "userToken", "org_name": "NewOrg", "description": "New Organization Description"}
+{"action": "create_organization", "token": "1325f1f5-31d4-435a-b25a-bf0506725da8", "org_name": "NewOrg12313", "description": "New Organization Description"}
 
 # Update Organization
 {"action": "update_organization", "token": "userToken", "org_name": "ExistingOrg", "field": "description", "value": "Updated Description"}
@@ -485,7 +485,7 @@ If you do not want to deal with token and user etc, you can use the following to
 {"action": "update_event", "token": "your_token", "org_name": "organization1", "event_title": "Existing Event", "capacity": 100, "duration": 90, "weekly": true, "description": "Updated Description", "category": "Updated Category"}
 
 # Create Organization Permissions
-{"action": "create_organization_permissions", "token": "your_token", "org_name": "organization1", "list_permission": true, "add_permission": true, "access_permission": true, "delete_permission": true}
+{"action": "create_organization_permissions", "token": "ef242de6-fdd2-4d53-9edc-1a2c8961d492", "org_name": "new12345", "list_permission": true, "add_permission": true, "access_permission": true, "delete_permission": true}
 
 # Create Room permissions
 {"action": "create_room_permissions", "token": "your_token", "org_name": "organization1", "room_name": "Room 1", "list_permission": true, "reserve_permission": true, "perreserve_permission": true, "delete_permission": true, "write_permission": true}

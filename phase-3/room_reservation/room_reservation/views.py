@@ -201,7 +201,9 @@ def create_organization(request):
                                get('response', 'Invalid response from server in permissions'))
 
         # Prepare the context for rendering
-        context = {'response_message': response_message, 'permission_response': permission_response}
+        context = {'response_message': response_message,
+                   'permission_response': permission_response,
+                   'title': 'Create Organization Response'}
 
         # Check various conditions and modify context as needed
         if response_message == "Organization already exists.":
@@ -217,6 +219,30 @@ def create_organization(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in create organization'}, status=500)
 
+@csrf_exempt
+def update_organization(request):
+    """
+    This endpoint will update the organization.
+    """
+    token = request.session['token']
+
+    data = {'action': 'update_organization'}
+    data['org_name'] = request.POST.get('org_name')
+    data['field'] = request.POST.get('field')
+    data['value'] = request.POST.get('value')
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from')
+        context = {'response_message': response_message, 'title': 'Update Organization'}
+
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid field name or something went wrong in phase-2 server while updating organization.'}, status=500)
+
+
 
 @csrf_exempt
 def process_request(request):
@@ -231,6 +257,8 @@ def process_request(request):
 
     if command == 'create_organization':
         return create_organization(request)
+    elif command == 'update_organization':
+        return update_organization(request)
     else:
         return JsonResponse({'error': ''})
 
