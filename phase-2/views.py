@@ -275,9 +275,9 @@ def create_room_permissions(user: str, org_name: str, room_name: str, list_permi
         return "Room does not exist."
     
     if DB_MANAGER.room_permissions.create_room_permissions(user, room_id, list_permission, reserve_permission, perreserve_permission, delete_permission, write_permission):
-        return "Room permissions created for user " + user + " in room " + str(room_id)
+        return "Room permissions created for user " + user + " in room " + str(room_name)
     
-    return "Unable to create room permissions for user " + user + " in room " + str(room_id)
+    return "Unable to create room permissions for user " + user + " in room " + str(room_name)
 
 def create_event_permissions(user: str, event_id: int, read_permission: bool, write_permission: bool):
     """Creates the event permissions for the user if the user has permission to do so"""

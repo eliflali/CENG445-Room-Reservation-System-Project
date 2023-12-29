@@ -61,6 +61,8 @@ def send_command_to_phase2_server(command: dict, token: str = None):
         return f"Connection error: {e}"
     except struct.error as e:
         return f"Pack/Unpack error: {e}"
+    except Exception as e:
+        return f"Unknown error: {e}"
 
 
 def login_view(request):
@@ -245,7 +247,7 @@ def update_organization(request):
 @csrf_exempt
 def list_organizations(request):
     """
-    This endpoint will list all the rooms.
+    This endpoint will list all the organizations.
     """
     token = request.session['token']
 
@@ -260,6 +262,103 @@ def list_organizations(request):
         return render(request, 'list_organizations.html', context)
     except:
         return JsonResponse({'error': 'Something went wrong while list organizations'}, status=500)
+
+@csrf_exempt
+def list_rooms(request):
+    """
+    This endpoint will list all the rooms belong to the given org_name.
+    """
+    token = request.session['token']
+
+    data = {'action': 'list_rooms'}
+    data['org_name'] = request.POST.get('org_name')
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from phase2 server.')
+        context = {'response_message': response_message, 'title': 'List Rooms'}
+
+        return render(request, 'response_template.html', context)
+    except:
+        return JsonResponse({'error': 'Something went wrong while list rooms.'}, status=500)
+
+@csrf_exempt
+def create_room(request):
+    """
+    This endpoint will create a room object for the given org_name.
+
+    Room:
+           token = command['token']
+           org_name = command['org_name']
+           room_name = command['room_name']
+           x = command['x']
+           y = command['y']
+           capacity = command['capacity']
+           working_hours = command['working_hours']
+    """
+    token = request.session['token']
+
+    data = {'action': 'create_room',
+            'org_name': request.POST.get('org_name'),
+            'room_name': request.POST.get('room_name'),
+            'capacity': request.POST.get('capacity'),
+            'working_hours': request.POST.get('working_hours'),
+            'x': request.POST.get('x'),
+            'y': request.POST.get('y')
+            }
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response for create room from server')
+
+        context = {'response_message': response_message,
+                   'title': 'Create Room Response'}
+
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Failed to decode response from server in create room'}, status=500)
+
+
+@csrf_exempt
+def create_room_permission(request):
+    """
+    token = command['token']
+    org_name = command['org_name']
+    room_name = command['room_name']
+    list_permission = command['list_permission']
+    reserve_permission = command['reserve_permission']
+    perreserve_permission = command['perreserve_permission']
+    delete_permission = command['delete_permission']
+    write_permission = command['write_permission']
+    """
+    token = request.session['token']
+
+    permission_request = {'action': 'create_room_permissions',
+                          'org_name': request.POST.get('org_name'),
+                          'room_name': request.POST.get('room_name'),
+    }
+    permissions = request.POST.getlist('room_permissions')
+    for permission in permissions:
+        permission_request[permission] = 'true'
+
+    permission_response = send_command_to_phase2_server(permission_request, token)
+
+    try:
+        permission_response = json.loads(permission_response)
+        permission_response = permission_response.get('response', 'Invalid response for permission from server')
+
+        context = {'response_message': permission_response,
+                   'title': 'Room Permission Response'}
+
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Failed to decode response from server in create room'}, status=500)
+
+
+
 @csrf_exempt
 def process_request(request):
     """
@@ -277,8 +376,14 @@ def process_request(request):
         return update_organization(request)
     elif command == 'list_organizations':
         return list_organizations(request)
+    elif command == 'list_rooms':
+        return list_rooms(request)
+    elif command == 'create_room':
+        return create_room(request)
+    elif command == 'create_room_permissions':
+        return create_room_permission(request)
     else:
-        return JsonResponse({'error': ''})
+        return JsonResponse({'error': 'Command not implemented yet'})
 
 
 @csrf_exempt  # To bypass CSRF token verification for demonstration purposes

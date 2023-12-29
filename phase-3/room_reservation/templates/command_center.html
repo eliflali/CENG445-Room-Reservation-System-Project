@@ -19,6 +19,7 @@
           <option value="access_room">Get Room</option>
           <option value="delete_room">Delete Room</option>
           <option value="update_room">Update Room</option>
+          <option value="create_room_permissions">Room Permissions</option>
           <option value="list_room_events">List Room Reservations</option>
           <option value="create_reservation">Reserve</option>
           <option value="create_perreservation">Reserve for Weekly</option>
@@ -59,6 +60,31 @@
         <label for="description">Description:</label>
         <input type="text" id="description" name="description" />
       </div>
+      <div>
+        <label for="room_name">Room Name:</label>
+        <input type="text" id="room_name" name="room_name" />
+      </div>
+      <div>
+        <label for="capacity">Capacity:</label>
+        <input type="number" id="capacity" name="capacity" />
+      </div>
+      <div>
+        <label for="x">X:</label>
+        <input type="number" id="x" name="x" />
+      </div>
+      <div>
+        <label for="y">Y:</label>
+        <input type="number" id="y" name="y" />
+      </div>
+      <div>
+        <label for="working_hours">Working Hours:</label>
+        <input
+          type="text"
+          id="working_hours"
+          name="working_hours"
+          placeholder="e.g 09:00-17:00"
+        />
+      </div>
       <fieldset>
         <legend>Permissions:</legend>
         <div>
@@ -91,6 +117,54 @@
             value="delete"
           />
           <label for="perm_delete">Delete Permission</label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Room Permissions:</legend>
+        <div>
+          <input
+            type="checkbox"
+            id="list_perm"
+            name="room_permissions"
+            value="list_permission"
+          />
+          <label for="list_perm">List Permission</label>
+        </div>
+        <div>
+          <input
+            type="checkbox"
+            id="reserve_perm"
+            name="room_permissions"
+            value="reserve_permission"
+          />
+          <label for="reserve_perm">Reserve Permission</label>
+        </div>
+        <div>
+          <input
+            type="checkbox"
+            id="perreserve_perm"
+            name="room_permissions"
+            value="perreserve_permission"
+          />
+          <label for="perreserve_perm">Permanent Reserve Permission</label>
+        </div>
+        <div>
+          <input
+            type="checkbox"
+            id="delete_perm"
+            name="room_permissions"
+            value="delete_permission"
+          />
+          <label for="delete_perm">Delete Permission</label>
+        </div>
+        <div>
+          <input
+            type="checkbox"
+            id="write_perm"
+            name="room_permissions"
+            value="write_permission"
+          />
+          <label for="write_perm">Write Permission</label>
         </div>
       </fieldset>
       <button type="submit">Execute Command</button>
