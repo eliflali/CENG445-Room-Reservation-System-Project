@@ -91,6 +91,37 @@
           placeholder="e.g 09:00-17:00"
         />
       </div>
+      <div>
+        <label for="event_title">Event Title:</label>
+        <input
+          type="text"
+          id="event_title"
+          name="event_title"
+          placeholder="Event Title"
+        />
+      </div>
+      <div>
+        <label for="duration">Duration:</label>
+        <input
+          type="number"
+          id="duration"
+          name="duration"
+          placeholder="Duration in minutes."
+        />
+      </div>
+      <div>
+        <label for="category">Category:</label>
+        <input
+          type="text"
+          id="category"
+          name="category"
+          placeholder="e.g Concert, Wedding"
+        />
+      </div>
+      <div>
+        <input type="checkbox" id="weekly" name="weekly" value="weekly" />
+        <label for="weekly">Weekly</label>
+      </div>
       <fieldset>
         <legend>Permissions:</legend>
         <div>
@@ -187,6 +218,10 @@
         var yInput = document.getElementById("y");
         var capacityInput = document.getElementById("capacity");
         var workingHoursInput = document.getElementById("working_hours");
+        var eventTitleInput = document.getElementById("event_title");
+        var durationInput = document.getElementById("duration");
+        var categoryInput = document.getElementById("category");
+        var weeklyCheckbox = document.getElementById("weekly");
         var roomPermissionsInputs = document.querySelectorAll(
           'input[name="room_permissions"]'
         );
@@ -202,12 +237,16 @@
             yInput,
             capacityInput,
             workingHoursInput,
+            eventTitleInput,
+            durationInput,
+            categoryInput,
           ];
           allInputs.forEach(function (input) {
             input.required = false;
             input.classList.remove("required-field");
           });
 
+          weeklyCheckbox.checked = false;
           roomPermissionsInputs.forEach(function (input) {
             input.required = false;
             input.parentElement.classList.remove("required-field");
@@ -278,6 +317,25 @@
                 yInput,
                 capacityInput,
                 workingHoursInput,
+              ].forEach((input) => {
+                input.required = true;
+                input.classList.add("required-field");
+              });
+              break;
+            case "list_room_events":
+              orgNameInput.required = true;
+              orgNameInput.classList.add("required-field");
+              roomNameInput.required = true;
+              roomNameInput.classList.add("required-field");
+              break;
+            case "create_event":
+              [
+                orgNameInput,
+                eventTitleInput,
+                capacityInput,
+                durationInput,
+                descriptionInput,
+                categoryInput,
               ].forEach((input) => {
                 input.required = true;
                 input.classList.add("required-field");

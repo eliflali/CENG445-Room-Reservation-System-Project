@@ -221,13 +221,6 @@ def create_organization(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in create organization'}, status=500)
 
-"""
-create_organization: permissions, org_name, description
-update_organization: org_name, field, value
-list_rooms: org_name
-create_room: org_name, room_name, x, y, capacity, working_hours
-create_room_permissions: org_name, room_name, room_permissions
-"""
 @csrf_exempt
 def update_organization(request):
     """
@@ -438,6 +431,74 @@ def update_room(request):
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Something went wrong while update rooms.'}, status=500)
+
+
+
+@csrf_exempt
+def list_room_events(request):
+    """
+    THIS FUNCTION IS NOT TESTED YET
+
+
+    org_name = command['org_name']
+    room_name = command['room_name']
+    """
+
+    token = request.session['token']
+    data = {
+        'action': 'list_room_events',
+        'org_name': request.POST.get('org_name'),
+        'room_name': request.POST.get('room_name')
+    }
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from phase2 server in list_room_events')
+        context = {'response_message': response_message, 'title': 'List Room Events Response'}
+
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Something went wrong while list room events'}, status=500)
+
+@csrf_exempt
+def create_event(request):
+    """
+    org_name = command['org_name']
+    event_title = command['event_title']
+    capacity = command['capacity']
+    duration = command['duration']
+    weekly = command['weekly']
+    description = command['description']
+    category = command['category']
+    """
+    token = request.session['token']
+
+    data = {
+        'action': 'create_event',
+        'org_name': request.POST.get('org_name'),
+        'event_title': request.POST.get('event_title'),
+        'capacity': request.POST.get('capacity'),
+        'duration': request.POST.get('duration'),
+        'weekly': 'true' if request.POST.get('weekly') == 'weekly' else 'false',
+        'description': request.POST.get('description'),
+        'category': request.POST.get('category')
+    }
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from phase2 while create event')
+        context = {'response_message': response_message, 'title': 'Create Event Response'}
+
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Failed to decode response from server in create event'}, status=500)
+
+
+
 @csrf_exempt
 def process_request(request):
     """
@@ -467,6 +528,10 @@ def process_request(request):
         return delete_room(request)
     elif command == 'update_room':
         return update_room(request)
+    elif command == 'list_room_events':
+        return list_room_events(request)
+    elif command == 'create_event':
+        return create_event(request)
     else:
         return JsonResponse({'error': 'Command not implemented yet'})
 
