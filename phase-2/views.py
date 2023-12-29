@@ -256,9 +256,11 @@ def update_event(user: str, org: str, event_title: str, capacity: int, duration:
     """Updates an event for the organization if the user has permission to do so"""
     
     # first check if the user has permission to update an event for the organization
-    if DB_MANAGER.organization_permissions.get_add_permission(user, org):
+    event_id = DB_MANAGER.event_manager.get_event_id(event_title, org)
+    if event_id == None:
+        return "Event does not exist."
+    if DB_MANAGER.event_permissions.get_write_permission(user, event_id):
         # update the event for the organization
-        event_id = DB_MANAGER.event_manager.get_event_id(event_title, org)
         DB_MANAGER.event_manager.update_event(event_id, event_title, capacity, duration, weekly, description, category)
         return event_title + " updated for organization " + org
     
