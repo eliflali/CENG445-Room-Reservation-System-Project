@@ -221,6 +221,13 @@ def create_organization(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in create organization'}, status=500)
 
+"""
+create_organization: permissions, org_name, description
+update_organization: org_name, field, value
+list_rooms: org_name
+create_room: org_name, room_name, x, y, capacity, working_hours
+create_room_permissions: org_name, room_name, room_permissions
+"""
 @csrf_exempt
 def update_organization(request):
     """
@@ -277,9 +284,9 @@ def list_rooms(request):
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 server.')
-        context = {'response_message': response_message, 'title': 'List Rooms'}
+        context = {'rooms': response_message, 'title': 'List Rooms'}
 
-        return render(request, 'response_template.html', context)
+        return render(request, 'list_rooms.html', context)
     except:
         return JsonResponse({'error': 'Something went wrong while list rooms.'}, status=500)
 
