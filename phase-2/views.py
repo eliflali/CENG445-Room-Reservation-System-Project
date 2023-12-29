@@ -259,7 +259,7 @@ def update_event(user: str, org: str, event_title: str, capacity: int, duration:
     if DB_MANAGER.organization_permissions.get_add_permission(user, org):
         # update the event for the organization
         event_id = DB_MANAGER.event_manager.get_event_id(event_title, org)
-        DB_MANAGER.event_manager.update_event(event_id, event_title, description, category, capacity, duration, weekly, org)
+        DB_MANAGER.event_manager.update_event(event_id, event_title, capacity, duration, weekly, description, category)
         return event_title + " updated for organization " + org
     
     return "You don't have permission."

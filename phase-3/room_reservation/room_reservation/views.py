@@ -519,6 +519,43 @@ def list_events(request):
         return render(request, 'list_events.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Error while fetching list events.'}, status=500)
+
+@csrf_exempt
+def update_event(request):
+    """
+    org_name = command['org_name']
+    event_title = command['event_title']
+    capacity = command['capacity']
+    duration = command['duration']
+    weekly = command['weekly']
+    description = command['description']
+    category = command['category']
+    """
+    token = request.session['token']
+
+    data = {
+        'action': 'update_event',
+        'org_name': request.POST.get('org_name'),
+        'event_title': request.POST.get('event_title'),
+        'capacity': request.POST.get('capacity'),
+        'duration': request.POST.get('duration'),
+        'weekly': request.POST.get('weekly'),
+        'description': request.POST.get('description'),
+        'category': request.POST.get('category')
+    }
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from phase2 in update event')
+        context = {'response_message': response_message, 'title': 'Update Event Response'}
+
+        return render(request, 'response_template.html', context)
+
+    except json.JSONDecodeError:
+        return HttpResponse('Invalid response from phase2 in update event')
+
 @csrf_exempt
 def process_request(request):
     """
@@ -554,6 +591,8 @@ def process_request(request):
         return create_event(request)
     elif command == 'list_events':
         return list_events(request)
+    elif command == 'update_event':
+        return update_event(request)
     else:
         return JsonResponse({'error': 'Command not implemented yet'})
 
