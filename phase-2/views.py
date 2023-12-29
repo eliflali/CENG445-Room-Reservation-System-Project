@@ -123,7 +123,8 @@ def delete_room(user: str, org: str, room_name: str):
     # first check if the user has permission to delete the room
     if DB_MANAGER.org_manager.get_organization_owner(org) == user:
         # delete the room from the organization
-        DB_MANAGER.room_manager.delete_room(room_name, org) or True
+        room_id = DB_MANAGER.room_manager.get_room_id(room_name, org)
+        DB_MANAGER.room_manager.delete_room(room_id)
         return "Room successfully deleted."
 
     

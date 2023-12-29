@@ -389,6 +389,27 @@ def get_room(request):
         return JsonResponse({'error': 'Something went wrong while get room.'}, status=500)
 
 @csrf_exempt
+def delete_room(request):
+    """
+    org_name = command['org_name']
+    room_name = command['room_name']
+    """
+    token = request.session['token']
+    data = {'action': 'delete_room',
+            'org_name': request.POST.get('org_name'),
+            'room_name': request.POST.get('room_name')}
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response = response.get('response', 'Invalid response from phase2 server in delete_room')
+        context = {'response_message': response}
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid response from'})
+
+@csrf_exempt
 def process_request(request):
     """
     Process the request and returns back from the deep backend server.
@@ -413,6 +434,8 @@ def process_request(request):
         return create_room_permission(request)
     elif command == 'access_room':
         return get_room(request)
+    elif command == 'delete_room':
+        return delete_room(request)
     else:
         return JsonResponse({'error': 'Command not implemented yet'})
 
