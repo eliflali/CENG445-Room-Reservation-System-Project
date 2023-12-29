@@ -303,6 +303,18 @@ class CommandOperations:
                     
                     response = views.create_event(user, org_name, event_title, capacity, duration, weekly, description, category)
                     return json.dumps({"response": response})
+                
+                #list_events(user: str, org_name: str):
+                elif command['action'] == 'list_events':
+                    token = command['token']
+                    org_name = command['org_name']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    response = views.list_events(user, org_name)
+                    return json.dumps({"response": response})
 
                 #update_event(user: str, org: str, event_title: str, capacity: int, duration: int, weekly: bool, description: str, category: str):
                 elif command['action'] == 'update_event':

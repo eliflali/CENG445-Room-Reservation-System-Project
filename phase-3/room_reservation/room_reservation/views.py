@@ -497,8 +497,28 @@ def create_event(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in create event'}, status=500)
 
+@csrf_exempt
+def list_events(request):
+    """
+    org_name = command['org_name']
+    """
+    token = request.session['token']
 
+    data = {
+        'action': 'list_events',
+        'org_name': request.POST.get('org_name')
+    }
 
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from phase2 while list events')
+        context = {'rooms': response_message, 'title': 'List Events Response'}
+
+        return render(request, 'list_events.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Error while fetching list events.'}, status=500)
 @csrf_exempt
 def process_request(request):
     """
@@ -532,6 +552,8 @@ def process_request(request):
         return list_room_events(request)
     elif command == 'create_event':
         return create_event(request)
+    elif command == 'list_events':
+        return list_events(request)
     else:
         return JsonResponse({'error': 'Command not implemented yet'})
 

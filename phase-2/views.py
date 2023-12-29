@@ -86,6 +86,16 @@ def list_rooms(user: str, org_name: str):
         return rooms if rooms else []
     else:
         return "You don't have permission."
+
+def list_events(user: str, org_name: str):
+    """Returns a events of all the rooms in the organization to the user"""    
+    # first check if the user has permission to view the events in the organization
+    if DB_MANAGER.organization_permissions.get_list_permission(user, org_name):
+        # get all the events in the organization
+        events = DB_MANAGER.org_manager.get_events(org_name)
+        return events if events else []
+    else:
+        return "You don't have permission."
     
 
 #permission row added

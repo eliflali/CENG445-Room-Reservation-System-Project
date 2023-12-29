@@ -32,6 +32,7 @@
           <option value="delete_reservation">Delete Reservation</option>
           <option value="access_event">Get Event</option>
           <option value="create_event">Create a New Event</option>
+          <option value="list_events">List all events for organization</option>  
           <option value="update_event">Update Event</option>
           <option value="create_organization_permissions">
             Get Permissions for Organization
@@ -63,8 +64,6 @@
         <input type="text" id="value" name="value" />
       </div>
       <div>
-        <label for="description">Description:</label>
-        <input type="text" id="description" name="description" />
       </div>
       <div>
         <label for="room_name">Room Name:</label>
@@ -341,7 +340,11 @@
                 input.classList.add("required-field");
               });
               break;
-            // Add cases for other commands as needed
+            case "list_events":
+              orgNameInput.required = true;
+              orgNameInput.classList.add("required-field");
+              break;
+              // Add cases for other commands as needed
           }
         }
 
