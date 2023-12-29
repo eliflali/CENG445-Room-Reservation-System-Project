@@ -349,7 +349,7 @@ class OrganizationManager(DBManager):
     
     def get_events(self, name: str) -> list:
         result = self._execute_query_with_result("""SELECT * FROM events WHERE organization = ?;""", (name,))
-        return [{"id": row[0], "title": row[1], "description": row[2], "category": row[3], "capacity": row[4], "duration": row[5], "weekly": row[6], "permissions": row[7], "organization": row[8]} for row in result] if result else None
+        return [{"id": row[0], "title": row[1], "description": row[2], "category": row[3], "capacity": row[4], "duration": row[5], "weekly": row[6], "organization": row[7], "owner": row[8]} for row in result] if result else None
 
     def update_organization(self, name: str, field: str, value: str) -> None:
         print(f"Updating organization {name} field {field} to {value}")
