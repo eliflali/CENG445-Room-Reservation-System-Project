@@ -104,7 +104,7 @@ def create_room(user: str, org: str, room_name: str, x: int, y: int, capacity: i
 def access_room(user: str, org: str, room_name: str):
     """Returns the room if the user has permission to access it"""
     # first check if the user has permission to access the room
-    if DB_MANAGER.organization_permissions.get_access_permission(user, org, room_name):
+    if DB_MANAGER.organization_permissions.get_access_permission(user, org):
         # get the room from the organization
         room_id = DB_MANAGER.room_manager.get_room_id(room_name, org)
         return DB_MANAGER.room_manager.get_room(room_id)

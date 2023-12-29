@@ -365,6 +365,28 @@ def create_room_permission(request):
         return JsonResponse({'error': 'Failed to decode response from server in create room'}, status=500)
 
 
+@csrf_exempt
+def get_room(request):
+    """
+    token = command['token']
+    org_name = command['org_name']
+    room_name = command['room_name']
+    """
+    token = request.session['token']
+
+    data = {'action': 'access_room',
+            'org_name': request.POST.get('org_name'),
+            'room_name': request.POST.get('room_name')
+            }
+
+    response = send_command_to_phase2_server(data, token)
+    try:
+        response = json.loads(response)
+        response = response.get('response', 'Invalid response from phase2 server in get_room')
+        context = {'rooms': response}
+        return render(request, 'access_room.html', context)
+    except:
+        return JsonResponse({'error': 'Something went wrong while get room.'}, status=500)
 
 @csrf_exempt
 def process_request(request):
@@ -389,6 +411,8 @@ def process_request(request):
         return create_room(request)
     elif command == 'create_room_permissions':
         return create_room_permission(request)
+    elif command == 'access_room':
+        return get_room(request)
     else:
         return JsonResponse({'error': 'Command not implemented yet'})
 
