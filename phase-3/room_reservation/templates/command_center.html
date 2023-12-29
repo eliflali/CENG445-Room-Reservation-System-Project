@@ -269,8 +269,20 @@
               orgNameInput.classList.add("required-field");
               roomNameInput.required = true;
               roomNameInput.classList.add("required-field");
-              break;  
-              
+              break;
+            case "update_room":
+              [
+                orgNameInput,
+                roomNameInput,
+                xInput,
+                yInput,
+                capacityInput,
+                workingHoursInput,
+              ].forEach((input) => {
+                input.required = true;
+                input.classList.add("required-field");
+              });
+              break;
             // Add cases for other commands as needed
           }
         }

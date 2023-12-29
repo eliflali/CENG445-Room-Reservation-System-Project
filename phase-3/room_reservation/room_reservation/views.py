@@ -410,6 +410,35 @@ def delete_room(request):
         return JsonResponse({'error': 'Invalid response from'})
 
 @csrf_exempt
+def update_room(request):
+    """
+    org_name = command['org_name']
+    room_name = command['room_name']
+    capacity = command['capacity']
+    x = command['x']
+    y = command['y']
+    working_hours = command['working_hours']
+    """
+    token = request.session['token']
+
+    data = {'action': 'update_room',
+            'org_name': request.POST.get('org_name'),
+            'room_name': request.POST.get('room_name'),
+            'capacity': request.POST.get('capacity'),
+            'working_hours': request.POST.get('working_hours'),
+            'x': request.POST.get('x'),
+            'y': request.POST.get('y')}
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from phase2 server in update_room')
+        context = {'response_message': response_message, 'title': 'Update Room Response'}
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Something went wrong while update rooms.'}, status=500)
+@csrf_exempt
 def process_request(request):
     """
     Process the request and returns back from the deep backend server.
@@ -436,6 +465,8 @@ def process_request(request):
         return get_room(request)
     elif command == 'delete_room':
         return delete_room(request)
+    elif command == 'update_room':
+        return update_room(request)
     else:
         return JsonResponse({'error': 'Command not implemented yet'})
 
