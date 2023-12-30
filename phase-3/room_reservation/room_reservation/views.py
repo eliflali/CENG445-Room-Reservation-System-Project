@@ -628,7 +628,6 @@ def create_event_permission(request):
     for permission in permissions:
         data[permission + "_permission"] = 'true'
 
-    print(data)
     response = send_command_to_phase2_server(data, token)
 
     try:
