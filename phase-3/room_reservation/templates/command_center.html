@@ -108,7 +108,16 @@
               }
             });
           }
+          
+          // Show or hide the "Find Schedule" link
+          const findScheduleLink = document.getElementById('find-schedule-link');
+          if (selectedCommand === 'find_schedule') {
+            findScheduleLink.style.display = 'inline-block';
+          } else {
+            findScheduleLink.style.display = 'none';
+          }
         }
+        
     
         // Initial call to set the correct field visibility
         handleCommandChange();
@@ -160,6 +169,9 @@
           <option value="room_view">Room View</option>
         </select>
       </div>
+        
+      <a href="/find-schedule/" target="_blank" id="find-schedule-link" style="display: none;" class="button">Find Schedule</a>  
+        
       <div>
       <div id = "org_name" class="form-group optional-form-group">
         <label for="org_name">Organization Name:</label>
