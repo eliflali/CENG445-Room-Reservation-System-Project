@@ -88,7 +88,6 @@
           create_organization_permissions: ['orgname','perm_list', 'perm_access', 'perm_delete', 'perm_add'],
           create_room_permissions: ['orgname', 'roomname','roomperm_list', 'perm_reserve', 'perm_perreserve', 'roomperm_delete', 'perm_write'],
           create_event_permission: ['orgname', 'event_title','eventperm_write', 'eventperm_read'],
-          create_perreservation: ['orgname', 'roomname', 'event_title', 'start_time', 'duration', 'weekly', 'description'],
           // Assuming attach and detach are valid commands and event_ids, room_id are the corresponding fields
           attach: ['room_id', 'event_ids'],
           detach: ['room_id', 'event_ids']
@@ -151,7 +150,6 @@
           <option value="update_room">Update Room</option>
           <option value="list_room_events">List Room Reservations</option>
           <option value="create_reservation">Reserve</option>
-          <option value="create_perreservation">Reserve for Weekly</option>
           <option value="delete_reservation">Delete Reservation</option>
           <option value="access_event">Get Event</option>
           <option value="create_event">Create a New Event</option>
