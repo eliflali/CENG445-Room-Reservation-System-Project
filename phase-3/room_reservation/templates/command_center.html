@@ -69,7 +69,7 @@
         }
     
         const fieldMapping = {
-          create_organization: ['orgname', 'description'],
+          create_organization: ['orgname', 'description', 'perm_list', 'perm_access', 'perm_delete', 'perm_add'],
           update_organization: ['orgname', 'description'],
           list_rooms: ['orgname'],
           create_room: ['orgname', 'roomname', 'x', 'y', 'capacity', 'working_hours'],
@@ -84,9 +84,9 @@
           access_event: ['orgname','event_title' ], //what are params
           find_schedule: ['event_ids', 'room_id'],
           room_view: ['orgname', 'start_date', 'end_date'],
-          create_organization_permissions: ['perm_list', 'perm_access', 'perm_delete'],
-          create_room_permissions: ['roomperm_list', 'perm_reserve', 'perm_perreserve', 'roomperm_delete', 'perm_write'],
-          create_event_permission: ['eventperm_write', 'eventperm_read'],
+          create_organization_permissions: ['orgname','perm_list', 'perm_access', 'perm_delete', 'perm_add'],
+          create_room_permissions: ['orgname', 'roomname','roomperm_list', 'perm_reserve', 'perm_perreserve', 'roomperm_delete', 'perm_write'],
+          create_event_permission: ['orgname', 'event_title','eventperm_write', 'eventperm_read'],
           create_perreservation: ['orgname', 'roomname', 'event_title', 'start_time', 'duration', 'weekly', 'description'],
           // Assuming attach and detach are valid commands and event_ids, room_id are the corresponding fields
           attach: ['room_id', 'event_ids'],
