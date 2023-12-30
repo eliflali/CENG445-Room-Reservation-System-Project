@@ -722,6 +722,7 @@ def room_view(request):
 
 
 @csrf_exempt
+@login_required
 def find_schedule(request):
     """
     event_ids = command['event_ids']

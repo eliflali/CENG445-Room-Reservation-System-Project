@@ -68,10 +68,9 @@
         {% csrf_token %}
 
         <div id="event-titles-container" class="form-group">
-            <label for="schedule_event_titles">Event Titles:</label>
-            <input type="text" name="schedule_event_titles" class="form-control">
+            <label for="schedule_event_titles">Event ids:</label>
+            <input type="text" name="schedule_event_titles" class="form-control" placeholder="1,2,3,4,5,6,7,8,9 (should be seperated by a comma only)">
         </div>
-        <button id="add-event-title" type="button" class="button">Add Another Event Title</button>
 
         <div class="form-group">
             <label for="schedule_org_name">Organization Name:</label>
@@ -90,7 +89,7 @@
 
         <div class="form-group">
             <label for="schedule_working_hours">Working Hours:</label>
-            <input type="text" id="schedule_working_hours" name="schedule_working_hours" class="form-control">
+            <input type="text" placeholder="e.g 09:00-17:00" id="schedule_working_hours" name="schedule_working_hours" class="form-control">
         </div>
 
         <button type="submit" class="button">Submit</button>
