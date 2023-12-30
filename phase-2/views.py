@@ -348,9 +348,13 @@ def find_free_time_slots(room_id, date, working_hours):
 
     return free_slots
 
-def find_schedule(event_ids, room_id, date, working_hours):
+def find_schedule(event_ids, org_name, room_name, date, working_hours):
     room_manager = DB_MANAGER.room_manager
     event_manager = DB_MANAGER.event_manager
+    
+    
+    room_id = room_manager.get_room_id(room_name, org_name)
+    
     free_slots = find_free_time_slots(room_id, date, working_hours)
 
     # Convert free slots into datetime objects for easier manipulation

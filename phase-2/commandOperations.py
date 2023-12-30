@@ -384,11 +384,13 @@ class CommandOperations:
                     response = views.create_event_permissions(user, org, event_title, read_permission, write_permission)
                     return json.dumps({"response": response})
                 
-                #find_schedule(event_ids, room_id, date, working_hours):
+                #find_schedule(event_titles, org_name, room_name, date, working_hours):
                 elif command['action'] == 'find_schedule':
                     token = command['token']
-                    event_ids = command['event_ids']
-                    room_id = command['room_id']
+                    event_ids = command.get('event_ids', '').split(',')
+                    print(f"EVENT TITLES: {event_ids}")
+                    org_name = command['org_name']
+                    room_name = command['room_name']
                     date = command['date']
                     working_hours = command['working_hours']
                     
@@ -396,7 +398,7 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                 
-                    response = views.find_schedule(event_ids, room_id, date, working_hours)
+                    response = views.find_schedule(event_ids, org_name, room_name, date, working_hours)
                     return json.dumps({"response": response})
                 
                 #roomView(user: str, org: str, start_datetime_str, end_datetime_str):
@@ -521,7 +523,7 @@ If you do not want to deal with token and user etc, you can use the following to
 {"action": "create_event_permission", "token": "your_token", "event_id": 123, "read_permission": true, "write_permission": true}
 
 # Find Schedule
-{"action": "find_schedule", "token": "your_token", "event_ids": [123, 456], "room_id": 789, "date": "2021-04-01", "working_hours": "09:00-17:00"}
+{"action": "find_schedule", "token": "e9e19127-c438-4b94-83d3-48dcaf1aedb3", "org_name": "new12345","event_titles": ["EVENT TEST"], "room_name": 3, "date": "2021-04-01", "working_hours": "09:00-17:00"}
     
 # Room View
 {"action": "room_view", "token": "your_token", "org_name": "organization1", "start_date": "2021-04-01 08:00", "end_date": "2021-04-30 18:00"}

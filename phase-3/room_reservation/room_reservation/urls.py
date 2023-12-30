@@ -28,5 +28,6 @@ urlpatterns = [
      path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('execute-login/', views.execute_login, name='execute_login'),
     path('register/', views.register_view, name='register'),
+    path('find-schedule/', views.find_schedule, name='find-schedule')
     
 ]

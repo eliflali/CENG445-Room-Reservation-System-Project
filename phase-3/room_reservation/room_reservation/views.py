@@ -277,6 +277,10 @@ def list_rooms(request):
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 server.')
+        if response_message == "You don't have permission.":
+            context = {'response_message': response_message, 'title': 'List Rooms'}
+            return render(request, 'response_template.html', context)
+            pass
         context = {'rooms': response_message, 'title': 'List Rooms'}
 
         return render(request, 'list_rooms.html', context)
@@ -514,6 +518,10 @@ def list_events(request):
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 while list events')
+        if response_message == "You don't have permission.":
+            context = {'response_message': response_message, 'title': 'List Events'}
+            return render(request, 'response_template.html', context)
+            pass
         context = {'events': response_message, 'title': 'List Events Response'}
 
         return render(request, 'list_events.html', context)
@@ -642,6 +650,42 @@ def create_event_permission(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
 
+@csrf_exempt
+def find_schedule(request):
+    """
+    event_ids = command['event_ids']
+    org_name = command['org_name']
+    room_name = command['room_name']
+    date = command['date']
+    working_hours = command['working_hours']
+    """
+    if request.method == 'GET':
+        return render(request, 'get_schedule.html')
+
+    token = request.session['token']
+
+    data = {
+        'action': 'find_schedule',
+        'event_ids': request.POST.get('schedule_event_titles'),
+        'org_name': request.POST.get('schedule_org_name'),
+        'room_name': request.POST.get('schedule_room_name'),
+        'date': request.POST.get('schedule_date'),
+        'working_hours': request.POST.get('schedule_working_hours')
+    }
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response = response.get('response', 'Invalid response for find_schedule')
+        context = {'response': response}
+
+        return render(request, "schedule.html", context)
+    except json.JSONDecodeError:
+        return HttpResponse("Invalid response from server in schedule")
+
+
+
+
 
 
 @csrf_exempt
@@ -687,6 +731,9 @@ def process_request(request):
         return delete_event(request)
     elif command == 'create_event_permission':
         return create_event_permission(request)
+    elif command == 'find_schedule':
+        print("inside find_schedule")
+        return redirect("find-schedule")
     else:
         return JsonResponse({'error': 'Command not implemented yet'})
 
