@@ -42,17 +42,17 @@
         </tr>
       </thead>
       <tbody>
-        {% for room in rooms %}
+        {% for event in events %}
         <tr>
-          <td>{{ room.id }}</td>
-          <td>{{ room.title }}</td>
-          <td>{{ room.description }}</td>
-          <td>{{ room.category }}</td>
-          <td>{{ room.capacity }}</td>
-          <td>{{ room.duration }}</td>
-          <td>{{ room.weekly }}</td>
-          <td>{{ room.organization }}</td>
-          <td>{{ room.owner }}</td>
+          <td>{{ event.id }}</td>
+          <td>{{ event.title }}</td>
+          <td>{{ event.description }}</td>
+          <td>{{ event.category }}</td>
+          <td>{{ event.capacity }}</td>
+          <td>{{ event.duration }}</td>
+          <td>{{ event.weekly }}</td>
+          <td>{{ event.organization }}</td>
+          <td>{{ event.owner }}</td>
         </tr>
         {% endfor %}
       </tbody>

@@ -514,7 +514,7 @@ def list_events(request):
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 while list events')
-        context = {'rooms': response_message, 'title': 'List Events Response'}
+        context = {'events': response_message, 'title': 'List Events Response'}
 
         return render(request, 'list_events.html', context)
     except json.JSONDecodeError:
@@ -557,6 +557,31 @@ def update_event(request):
         return HttpResponse('Invalid response from phase2 in update event')
 
 @csrf_exempt
+def access_event(request):
+    """
+    org_name = command['org_name']
+    event_title = command['event_title']
+    """
+
+    token = request.session['token']
+
+    data = {
+        'action': 'access_event',
+        'org_name': request.POST.get('org_name'),
+        'event_title': request.POST.get('event_title')
+    }
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from access event')
+        context = {'events': response_message, 'title': 'Access Event Response'}
+
+        return render(request, 'access_event.html', context)
+    except json.JSONDecodeError:
+        return HttpResponse('Invalid response from access event in access event')
+@csrf_exempt
 def process_request(request):
     """
     Process the request and returns back from the deep backend server.
@@ -593,6 +618,8 @@ def process_request(request):
         return list_events(request)
     elif command == 'update_event':
         return update_event(request)
+    elif command == 'access_event':
+        return access_event(request)
     else:
         return JsonResponse({'error': 'Command not implemented yet'})
 
