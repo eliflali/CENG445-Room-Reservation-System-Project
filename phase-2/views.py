@@ -225,7 +225,7 @@ def delete_reservation(user: str, org: str, room_name: str, event_title: str, st
         DB_MANAGER.reservation_manager.delete_reservation(reservation_id)
         return room_name + " reservation deleted for the event " + event_title
     return "You don't have permission."
-    
+        
 
 #deleted user param 
 def read_event( org: str, event_title: str):
@@ -257,7 +257,7 @@ def update_event(user: str, org: str, event_title: str, capacity: int, duration:
     
     # first check if the user has permission to update an event for the organization
     event_id = DB_MANAGER.event_manager.get_event_id(event_title, org)
-    if event_id == None:
+    if event_id is None:
         return "Event does not exist."
     if DB_MANAGER.event_permissions.get_write_permission(user, event_id):
         # update the event for the organization
@@ -266,6 +266,19 @@ def update_event(user: str, org: str, event_title: str, capacity: int, duration:
     
     return "You don't have permission."
 
+def delete_event(user: str, org: str, event_title: str):
+    """Deletes an event for the organization if the user has permission to do so"""
+    
+    # first check if the user has permission to delete an event for the organization
+    event_id = DB_MANAGER.event_manager.get_event_id(event_title, org)
+    if event_id is None:
+        return "Event does not exist."
+    if DB_MANAGER.event_permissions.get_write_permission(user, event_id):
+        # delete the event for the organization
+        DB_MANAGER.event_manager.delete_event(event_id)
+        return event_title + " deleted for organization " + org
+    
+    return "You don't have permission."
 
 """
 PERMISSIONS
@@ -292,11 +305,15 @@ def create_room_permissions(user: str, org_name: str, room_name: str, list_permi
     
     return "Unable to create room permissions for user " + user + " in room " + str(room_name)
 
-def create_event_permissions(user: str, event_id: int, read_permission: bool, write_permission: bool):
+def create_event_permissions(user: str, org: str, event_title: str, read_permission: str, write_permission: str):
     """Creates the event permissions for the user if the user has permission to do so"""
+    event_id = DB_MANAGER.event_manager.get_event_id(event_title, org)
     
+    if not event_id:
+        return "Event does not exist."
+
     if DB_MANAGER.event_permissions.create_event_permissions(user, event_id, read_permission, write_permission):
-        return "Event permissions created for user " + user + " in event " + str(event_id)
+        return "Event permissions created for user " + user + " in event " + event_title
     
     return "Unable to create event permissions for user " + user + " in event " + str(event_id)
 

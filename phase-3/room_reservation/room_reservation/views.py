@@ -581,6 +581,69 @@ def access_event(request):
         return render(request, 'access_event.html', context)
     except json.JSONDecodeError:
         return HttpResponse('Invalid response from access event in access event')
+
+@csrf_exempt
+def delete_event(request):
+    """
+    org_name = command['org_name']
+    event_title = command['event_title']
+    """
+    token = request.session['token']
+
+    data = {
+        'action': 'delete_event',
+        'org_name': request.POST.get('org_name'),
+        'event_title': request.POST.get('event_title')
+    }
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from delete event')
+        context = {'response_message': response_message, 'title': 'Delete Event Response'}
+
+        return render(request, 'response_template.html', context)
+
+    except json.JSONDecodeError:
+        return HttpResponse('Invalid response from delete event')
+
+@csrf_exempt
+def create_event_permission(request):
+    """
+    org = command['org_name']
+    event_title = command['event_title']
+    read_permission = command['read_permission']
+    write_permission = command['write_permission']
+    """
+    token = request.session['token']
+
+    data = {
+        'action': 'create_event_permission',
+        'org_name': request.POST.get('org_name'),
+        'event_title': request.POST.get('event_title')
+    }
+
+    permissions = request.POST.getlist('event_permissions')
+
+    for permission in permissions:
+        data[permission] = 'true'
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        permission_response = json.loads(response)
+        permission_response = permission_response.get('response', 'Invalid response for permission from server')
+
+        context = {'response_message': permission_response,
+                   'title': 'Event Permission Response'}
+
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
+
+
+
 @csrf_exempt
 def process_request(request):
     """
@@ -620,6 +683,10 @@ def process_request(request):
         return update_event(request)
     elif command == 'access_event':
         return access_event(request)
+    elif command == 'delete_event':
+        return delete_event(request)
+    elif command == 'create_event_permission':
+        return create_event_permission(request)
     else:
         return JsonResponse({'error': 'Command not implemented yet'})
 
