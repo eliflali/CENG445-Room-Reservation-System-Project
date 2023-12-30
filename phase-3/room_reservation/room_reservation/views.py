@@ -7,6 +7,7 @@ from django.http import HttpResponse
 import logging
 from django.shortcuts import redirect
 import requests
+from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
 from .decorators import login_required  # Import the decorator
 
@@ -521,6 +522,42 @@ def list_events(request):
         return JsonResponse({'error': 'Error while fetching list events.'}, status=500)
 
 @csrf_exempt
+def create_reservation(request):
+    """
+    org_name = command['org_name']
+    room_name = command['room_name']
+    event_title = command['event_title']
+    start_time = command['start_time']
+    duration = command['duration']
+    weekly = command['weekly']
+    description = command['description']
+    """
+    token = request.session['token']
+
+    data = {
+        'action': 'create_reservation',
+        'org_name': request.POST.get('org_name'),
+        'room_name': request.POST.get('room_name'),
+        'event_title': request.POST.get('event_title'),
+        'start_time': request.POST.get('start_time'),
+        'duration': request.POST.get('duration'),
+        'weekly': request.POST.get('weekly'),
+        'description': request.POST.get('description')
+    }
+    
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from phase2 in update event')
+        context = {'response_message': response_message, 'title': 'Update Event Response'}
+
+        return render(request, 'response_template.html', context)
+
+    except json.JSONDecodeError:
+        return HttpResponse('Invalid response from phase2 in update event')
+
+@csrf_exempt
 def update_event(request):
     """
     org_name = command['org_name']
@@ -716,6 +753,8 @@ def process_request(request):
         return delete_event(request)
     elif command == 'create_event_permission':
         return create_event_permission(request)
+    elif command == 'create_reservation':
+        return create_reservation(request)
     elif command == 'room_view':
         return room_view(request)
     else:
