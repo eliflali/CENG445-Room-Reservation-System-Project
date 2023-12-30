@@ -552,7 +552,8 @@ def create_reservation(request):
         'weekly': request.POST.get('weekly'),
         'description': request.POST.get('description')
     }
-    
+    if data['weekly']:
+        data['action'] = 'create_perreservation'
     response = send_command_to_phase2_server(data, token)
 
     try:
