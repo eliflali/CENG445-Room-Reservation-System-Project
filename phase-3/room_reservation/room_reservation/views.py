@@ -624,11 +624,11 @@ def create_event_permission(request):
         'event_title': request.POST.get('event_title')
     }
 
-    permissions = request.POST.getlist('event_permissions')
-
+    permissions = request.POST.getlist('permissions')
     for permission in permissions:
-        data[permission] = 'true'
+        data[permission + "_permission"] = 'true'
 
+    print(data)
     response = send_command_to_phase2_server(data, token)
 
     try:
