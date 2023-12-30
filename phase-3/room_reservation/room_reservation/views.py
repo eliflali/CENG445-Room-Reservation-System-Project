@@ -641,6 +641,36 @@ def create_event_permission(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
 
+@csrf_exempt
+def room_view(request):
+    """
+    org_name = command['org_name']
+    start_datetime_str = command['start_date']
+    end_datetime_str = command['end_date']
+    """
+    token = request.session['token']
+
+    data = {
+        'action': 'room_view',
+        'org_name': request.POST.get('org_name'),
+        'start_date': request.POST.get('start_date'),
+        'end_date': request.POST.get('end_date')
+    }
+
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response = response.get('response', 'Invalid response for permission from server')
+
+        context = {'response_message': response,
+                   'title': 'Room View'}
+
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
+
 
 
 @csrf_exempt
@@ -686,6 +716,8 @@ def process_request(request):
         return delete_event(request)
     elif command == 'create_event_permission':
         return create_event_permission(request)
+    elif command == 'room_view':
+        return room_view(request)
     else:
         return JsonResponse({'error': 'Command not implemented yet'})
 
