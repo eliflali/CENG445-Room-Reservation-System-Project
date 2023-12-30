@@ -9,6 +9,94 @@
         border: 1px solid #ffcc00; /* Yellow border */
       }
     </style>
+     <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const commandSelect = document.getElementById('command');
+        const fields = {
+          orgname: document.getElementById('org_name').closest('div'),
+          roomname: document.getElementById('room_name').closest('div'),
+          x: document.getElementById('x').closest('div'),
+          y: document.getElementById('y').closest('div'),
+          description: document.getElementById('description').closest('div'),
+          capacity: document.getElementById('capacity').closest('div'),
+          working_hours: document.getElementById('working_hours').closest('div'),
+          event_title: document.getElementById('event_title').closest('div'),
+          start_time: document.getElementById('start_time').closest('div'),
+          end_time: document.getElementById('end_time').closest('div'),
+          start_date: document.getElementById('start_date').closest('div'),
+          end_date: document.getElementById('end_date').closest('div'),
+          duration: document.getElementById('duration').closest('div'),
+          category: document.getElementById('category').closest('div'),
+          event_ids: document.getElementById('event_ids').closest('div'),
+          room_id: document.getElementById('room_id').closest('div'),
+          weekly: document.getElementById('weekly').closest('div'),
+          owner: document.getElementById('owner').closest('div'),
+          field: document.getElementById("field"),
+          value: document.getElementById("value"),
+
+          perm_list: document.getElementById('perm_list').closest('div'),
+          perm_access: document.getElementById('perm_access').closest('div'),
+          perm_add: document.getElementById('perm_add').closest('div'),
+          perm_delete: document.getElementById('perm_delete').closest('div'),
+
+          roomperm_list: document.getElementById('list_perm').closest('div'),
+          perm_perreserve: document.getElementById('perreserve_perm').closest('div'),
+          roomperm_delete: document.getElementById('delete_perm').closest('div'),
+          perm_read: document.getElementById('read_perm').closest('div'),
+          perm_write: document.getElementById('write_perm').closest('div'),
+          perm_reserve: document.getElementById('reserve_perm').closest('div'),
+        };
+    
+        function hideAllFields() {
+          for (const key in fields) {
+            fields[key].style.display = 'none';
+          }
+        }
+    
+        const fieldMapping = {
+          create_organization: ['orgname', 'description'],
+          update_organization: ['orgname', 'description'],
+          list_rooms: ['orgname'],
+          create_room: ['orgname', 'roomname', 'x', 'y', 'capacity', 'working_hours'],
+          access_room: ['orgname', 'roomname'],
+          delete_room: ['orgname', 'roomname'],
+          update_room: ['orgname', 'roomname', 'x', 'y', 'capacity', 'working_hours'],
+          list_room_events: ['orgname', 'roomname'],
+          create_reservation: ['orgname', 'roomname', 'event_title', 'start_time', 'duration','weekly', 'description'],
+          delete_reservation: ['orgname', 'roomname', 'event_title', 'start_time'],
+          create_event: ['orgname', 'event_title', 'start_time', 'duration', 'capacity', 'description', 'category'],
+          update_event: ['orgname', 'event_title', 'start_time', 'duration', 'capacity', 'description', 'category'],
+          access_event: ['orgname','event_title' ], //what are params
+          find_schedule: ['event_ids', 'room_id'],
+          room_view: ['orgname', 'start_date', 'end_date'],
+          create_organization_permissions: ['perm_list', 'perm_access', 'perm_delete'],
+          create_room_permissions: ['roomperm_list', 'perm_reserve', 'perm_perreserve', 'roomperm_delete', 'perm_write'],
+          create_event_permission: ['perm_write', 'perm_read'],
+          create_perreservation: ['orgname', 'roomname', 'event_title', 'start_time', 'duration', 'weekly', 'description'],
+          // Assuming attach and detach are valid commands and event_ids, room_id are the corresponding fields
+          attach: ['room_id', 'event_ids'],
+          detach: ['room_id', 'event_ids']
+        };
+    
+        function handleCommandChange() {
+          hideAllFields();
+          const selectedCommand = commandSelect.value;
+    
+          // Show fields based on the selected command
+          if (fieldMapping[selectedCommand]) {
+            fieldMapping[selectedCommand].forEach(field => {
+              fields[field].style.display = 'block';
+            });
+          }
+        }
+    
+        // Initial call to set the correct field visibility
+        handleCommandChange();
+    
+        // Event listener for changes in the command selection
+        commandSelect.addEventListener('change', handleCommandChange);
+      });
+    </script>
   </head>
   <body>
     <h1>Command Center</h1>
@@ -204,173 +292,6 @@
       </fieldset>
       <button type="submit">Execute Command</button>
     </form>
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        var commandSelect = document.getElementById("command");
-        var orgNameInput = document.getElementById("org_name");
-        var descriptionInput = document.getElementById("description");
-        var fieldInput = document.getElementById("field");
-        var valueInput = document.getElementById("value");
-        var roomNameInput = document.getElementById("room_name");
-        var xInput = document.getElementById("x");
-        var yInput = document.getElementById("y");
-        var capacityInput = document.getElementById("capacity");
-        var workingHoursInput = document.getElementById("working_hours");
-        var eventTitleInput = document.getElementById("event_title");
-        var durationInput = document.getElementById("duration");
-        var categoryInput = document.getElementById("category");
-        var weeklyCheckbox = document.getElementById("weekly");
-        var roomPermissionsInputs = document.querySelectorAll(
-          'input[name="room_permissions"]'
-        );
-
-        function clearRequiredFields() {
-          var allInputs = [
-            orgNameInput,
-            descriptionInput,
-            fieldInput,
-            valueInput,
-            roomNameInput,
-            xInput,
-            yInput,
-            capacityInput,
-            workingHoursInput,
-            eventTitleInput,
-            durationInput,
-            categoryInput,
-          ];
-          allInputs.forEach(function (input) {
-            input.required = false;
-            input.classList.remove("required-field");
-          });
-
-          weeklyCheckbox.checked = false;
-          roomPermissionsInputs.forEach(function (input) {
-            input.required = false;
-            input.parentElement.classList.remove("required-field");
-          });
-        }
-
-        function updateRequiredFields() {
-          clearRequiredFields();
-          var selectedCommand = commandSelect.value;
-
-          switch (selectedCommand) {
-            case "create_organization":
-              [orgNameInput, descriptionInput].forEach((input) => {
-                input.required = true;
-                input.classList.add("required-field");
-              });
-              break;
-            case "update_organization":
-              [orgNameInput, fieldInput, valueInput].forEach((input) => {
-                input.required = true;
-                input.classList.add("required-field");
-              });
-              break;
-            case "list_rooms":
-              orgNameInput.required = true;
-              orgNameInput.classList.add("required-field");
-              break;
-            case "create_room":
-              [
-                orgNameInput,
-                roomNameInput,
-                xInput,
-                yInput,
-                capacityInput,
-                workingHoursInput,
-              ].forEach((input) => {
-                input.required = true;
-                input.classList.add("required-field");
-              });
-              break;
-            case "create_room_permissions":
-              orgNameInput.required = true;
-              orgNameInput.classList.add("required-field");
-              roomNameInput.required = true;
-              roomNameInput.classList.add("required-field");
-              roomPermissionsInputs.forEach(function (input) {
-                input.required = true;
-                input.parentElement.classList.add("required-field");
-              });
-              break;
-            case "access_room":
-              orgNameInput.required = true;
-              orgNameInput.classList.add("required-field");
-              roomNameInput.required = true;
-              roomNameInput.classList.add("required-field");
-              break;
-            case "delete_room":
-              orgNameInput.required = true;
-              orgNameInput.classList.add("required-field");
-              roomNameInput.required = true;
-              roomNameInput.classList.add("required-field");
-              break;
-            case "update_room":
-              [
-                orgNameInput,
-                roomNameInput,
-                xInput,
-                yInput,
-                capacityInput,
-                workingHoursInput,
-              ].forEach((input) => {
-                input.required = true;
-                input.classList.add("required-field");
-              });
-              break;
-            case "list_room_events":
-              orgNameInput.required = true;
-              orgNameInput.classList.add("required-field");
-              roomNameInput.required = true;
-              roomNameInput.classList.add("required-field");
-              break;
-            case "create_event":
-              [
-                orgNameInput,
-                eventTitleInput,
-                capacityInput,
-                durationInput,
-                descriptionInput,
-                categoryInput,
-              ].forEach((input) => {
-                input.required = true;
-                input.classList.add("required-field");
-              });
-              break;
-            case "list_events":
-              orgNameInput.required = true;
-              orgNameInput.classList.add("required-field");
-              break;
-            // Add cases for other commands as needed
-            case "update_event":
-              [
-                orgNameInput,
-                eventTitleInput,
-                capacityInput,
-                durationInput,
-                descriptionInput,
-                categoryInput,
-              ].forEach((input) => {
-                input.required = true;
-                input.classList.add("required-field");
-              });
-              break;
-            case "access_event":
-              orgNameInput.required = true;
-              orgNameInput.classList.add("required-field");  
-              eventTitleInput.required = true;
-              eventTitleInput.classList.add("required-field");
-              break;
-          }
-        }
-
-        commandSelect.addEventListener("change", updateRequiredFields);
-
-        // Initial update on page load
-        updateRequiredFields();
-      });
-    </script>
   </body>
 </html>
+
