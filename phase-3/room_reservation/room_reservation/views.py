@@ -7,6 +7,7 @@ from django.http import HttpResponse
 import logging
 from django.shortcuts import redirect
 import requests
+from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
 from .decorators import login_required  # Import the decorator
 
@@ -529,6 +530,42 @@ def list_events(request):
         return JsonResponse({'error': 'Error while fetching list events.'}, status=500)
 
 @csrf_exempt
+def create_reservation(request):
+    """
+    org_name = command['org_name']
+    room_name = command['room_name']
+    event_title = command['event_title']
+    start_time = command['start_time']
+    duration = command['duration']
+    weekly = command['weekly']
+    description = command['description']
+    """
+    token = request.session['token']
+
+    data = {
+        'action': 'create_reservation',
+        'org_name': request.POST.get('org_name'),
+        'room_name': request.POST.get('room_name'),
+        'event_title': request.POST.get('event_title'),
+        'start_time': request.POST.get('start_time'),
+        'duration': request.POST.get('duration'),
+        'weekly': request.POST.get('weekly'),
+        'description': request.POST.get('description')
+    }
+    
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from phase2 in update event')
+        context = {'response_message': response_message, 'title': 'Update Event Response'}
+
+        return render(request, 'response_template.html', context)
+
+    except json.JSONDecodeError:
+        return HttpResponse('Invalid response from phase2 in update event')
+
+@csrf_exempt
 def update_event(request):
     """
     org_name = command['org_name']
@@ -632,10 +669,9 @@ def create_event_permission(request):
         'event_title': request.POST.get('event_title')
     }
 
-    permissions = request.POST.getlist('event_permissions')
-
+    permissions = request.POST.getlist('permissions')
     for permission in permissions:
-        data[permission] = 'true'
+        data[permission + "_permission"] = 'true'
 
     response = send_command_to_phase2_server(data, token)
 
@@ -649,6 +685,41 @@ def create_event_permission(request):
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
+
+
+@csrf_exempt
+def room_view(request):
+    """
+    org_name = command['org_name']
+    start_datetime_str = command['start_date']
+    end_datetime_str = command['end_date']
+    """
+    token = request.session['token']
+
+    data = {
+        'action': 'room_view',
+        'org_name': request.POST.get('org_name'),
+        'start_date': request.POST.get('start_date'),
+        'end_date': request.POST.get('end_date')
+    }
+
+
+    response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response = response.get('response', 'Invalid response for permission from server')
+
+        context = {'response_message': response,
+                   'title': 'Room View'}
+
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
+
+
+
+
 
 @csrf_exempt
 def find_schedule(request):
@@ -682,6 +753,7 @@ def find_schedule(request):
         return render(request, "schedule.html", context)
     except json.JSONDecodeError:
         return HttpResponse("Invalid response from server in schedule")
+
 
 
 
@@ -731,6 +803,10 @@ def process_request(request):
         return delete_event(request)
     elif command == 'create_event_permission':
         return create_event_permission(request)
+    elif command == 'create_reservation':
+        return create_reservation(request)
+    elif command == 'room_view':
+        return room_view(request)
     elif command == 'find_schedule':
         print("inside find_schedule")
         return redirect("find-schedule")

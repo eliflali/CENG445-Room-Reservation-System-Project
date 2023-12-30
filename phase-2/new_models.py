@@ -591,8 +591,9 @@ class ReservationManager(DBManager):
         # Convert the requested start time to a datetime object
         requested_start = datetime.strptime(requested_start_time, "%Y-%m-%d %H:%M") 
 
+        requested_duration = timedelta(minutes=int(requested_duration))
         # Calculate the end time of the requested reservation
-        requested_end = requested_start + timedelta(minutes=requested_duration)
+        requested_end = requested_start + requested_duration
 
         # Retrieve all reservations for the specified room
         existing_reservations = self.get_reservations_for_room(room_id)

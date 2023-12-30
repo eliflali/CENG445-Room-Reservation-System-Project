@@ -70,7 +70,7 @@
     
         const fieldMapping = {
           create_organization: ['orgname', 'description', 'perm_list', 'perm_access', 'perm_delete', 'perm_add'],
-          update_organization: ['orgname', 'description'],
+          update_organization: ['orgname', 'value', 'field'],
           list_rooms: ['orgname'],
           list_events: ['orgname'],
           create_room: ['orgname', 'roomname', 'x', 'y', 'capacity', 'working_hours'],
@@ -302,12 +302,12 @@
             type="checkbox"
             id="event_perm_read"
             name="permissions"
-            value="list"
+            value="read"
           />
           <label for="event_perm_read">Read Permission</label>
         </div>
         <div>
-          <input type="checkbox" id="event_perm_write" name="permissions" value="add" />
+          <input type="checkbox" id="event_perm_write" name="permissions" value="write" />
           <label for="event_perm_write">Write Permission</label>
         </div>
       </fieldset>
