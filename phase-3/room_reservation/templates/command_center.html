@@ -120,6 +120,11 @@
   </head>
   <body>
     <h1>Command Center</h1>
+    <!-- Logout Button -->
+    <form action="{% url 'logout' %}" method="post">
+      {% csrf_token %}
+      <button type="submit" class="button">Logout</button>
+    </form>
     <form action="/command-center/" method="post">
       {% csrf_token %}
       <div class = 'option'>
