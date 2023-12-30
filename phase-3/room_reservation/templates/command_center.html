@@ -25,7 +25,7 @@
           <option value="access_room">Get Room</option>
           <option value="delete_room">Delete Room</option>
           <option value="update_room">Update Room</option>
-          <option value="create_room_permissions">Room Permissions</option>
+          <option value="create_room_permissions">Get Room Permissions</option>
           <option value="list_room_events">List Room Reservations</option>
           <option value="create_reservation">Reserve</option>
           <option value="create_perreservation">Reserve for Weekly</option>
@@ -34,12 +34,7 @@
           <option value="create_event">Create a New Event</option>
           <option value="list_events">List all events for organization</option>
           <option value="update_event">Update Event</option>
-          <option value="create_organization_permissions">
-            Get Permissions for Organization
-          </option>
-          <option value="creat_room_permissions">
-            Get Permissions for Room
-          </option>
+          <option value="delete_event">Delete Event</option>
           <option value="create_event_permission">
             Get Permissions for Event
           </option>
@@ -363,6 +358,12 @@
               eventTitleInput.required = true;
               eventTitleInput.classList.add("required-field");
               break;
+            case "delete_event":
+              orgNameInput.required = true;
+              orgNameInput.classList.add("required-field");  
+              eventTitleInput.required = true;
+              eventTitleInput.classList.add("required-field");
+              break;  
           }
         }
 

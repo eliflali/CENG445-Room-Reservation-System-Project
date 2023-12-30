@@ -411,6 +411,19 @@ class CommandOperations:
                     response = views.roomView(user, org_name, start_datetime_str, end_datetime_str)
                     return json.dumps({"response": response})
                 
+                #delete_event(user: str, org: str, event_title: str):
+                elif command['action'] == 'delete_event':
+                    token = command['token']
+                    org_name = command['org_name']
+                    event_title = command['event_title']
+                    
+                    user = process_token(token)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                
+                    response = views.delete_event(user, org_name, event_title)
+                    return json.dumps({"response": response})
+                
                 #def attach_observer(user: str, room_id: int, event_id: int):
                 elif command['action'] == 'attach':
                     token = command['token']

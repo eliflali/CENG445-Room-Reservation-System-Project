@@ -72,7 +72,6 @@ class WriteAgent(Thread):
             if cmd['response'] == "Login successful and this is your token: ":
                 self.user = CommandOperations.get_user(cmd['token'])
 
-            
             try:
                 self.connection.sendall(command.encode())
                 if CommandOperations.send_notify(self.user):
@@ -113,10 +112,6 @@ class ReadAgent(Thread):
                 print(f"Received command: {command}")
                 command = CommandOperations.process_command(command)
                 
-                cmd = json.loads(command)
-                if cmd['response'] == "Login successful and this is your token: ":
-                    self.user_token = cmd['token']
-                    
                 self.command.newCommand(command)
 
         finally:

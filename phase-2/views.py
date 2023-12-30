@@ -225,7 +225,7 @@ def delete_reservation(user: str, org: str, room_name: str, event_title: str, st
         DB_MANAGER.reservation_manager.delete_reservation(reservation_id)
         return room_name + " reservation deleted for the event " + event_title
     return "You don't have permission."
-    
+        
 
 #deleted user param 
 def read_event( org: str, event_title: str):
@@ -257,7 +257,7 @@ def update_event(user: str, org: str, event_title: str, capacity: int, duration:
     
     # first check if the user has permission to update an event for the organization
     event_id = DB_MANAGER.event_manager.get_event_id(event_title, org)
-    if event_id == None:
+    if event_id is None:
         return "Event does not exist."
     if DB_MANAGER.event_permissions.get_write_permission(user, event_id):
         # update the event for the organization
@@ -266,6 +266,19 @@ def update_event(user: str, org: str, event_title: str, capacity: int, duration:
     
     return "You don't have permission."
 
+def delete_event(user: str, org: str, event_title: str):
+    """Deletes an event for the organization if the user has permission to do so"""
+    
+    # first check if the user has permission to delete an event for the organization
+    event_id = DB_MANAGER.event_manager.get_event_id(event_title, org)
+    if event_id is None:
+        return "Event does not exist."
+    if DB_MANAGER.event_permissions.get_write_permission(user, event_id):
+        # delete the event for the organization
+        DB_MANAGER.event_manager.delete_event(event_id)
+        return event_title + " deleted for organization " + org
+    
+    return "You don't have permission."
 
 """
 PERMISSIONS
