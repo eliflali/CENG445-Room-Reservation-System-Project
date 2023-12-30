@@ -368,10 +368,12 @@ class CommandOperations:
                     response = views.create_room_permissions(user, org_name, room_name, list_permission, reserve_permission, perreserve_permission, delete_permission, write_permission)
                     return json.dumps({"response": response})
                 
-                #create_event_permissions(user: str, event_id: int, read_permission: bool, write_permission: bool):
+                #create_event_permissions(user: str, , read_permission: bool, write_permission: bool):
                 elif command['action'] == 'create_event_permission':
+                    print(f"COMMAND IS COMMAND: {command}")
                     token = command['token']
-                    event_id = command['event_id']
+                    org = command['org_name']
+                    event_title = command['event_title']
                     read_permission = command['read_permission']
                     write_permission = command['write_permission']
                     
@@ -379,7 +381,7 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                 
-                    response = views.create_event_permissions(user, event_id, read_permission, write_permission)
+                    response = views.create_event_permissions(user, org, event_title, read_permission, write_permission)
                     return json.dumps({"response": response})
                 
                 #find_schedule(event_ids, room_id, date, working_hours):

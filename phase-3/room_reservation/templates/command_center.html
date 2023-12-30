@@ -197,6 +197,27 @@
           <label for="write_perm">Write Permission</label>
         </div>
       </fieldset>
+      <fieldset>
+        <legend>Room Permissions:</legend>
+        <div>
+          <input
+            type="checkbox"
+            id="write_permission"
+            name="event_permissions"
+            value="write_permission"
+          />
+          <label for="write_permission">Write Permission</label>
+        </div>
+        <div>
+          <input
+            type="checkbox"
+            id="read_permission"
+            name="event_permissions"
+            value="read_permission"
+          />
+          <label for="read_permission">Read Permission</label>
+        </div>
+      </fieldset>  
       <button type="submit">Execute Command</button>
     </form>
     <script>
@@ -364,6 +385,12 @@
               eventTitleInput.required = true;
               eventTitleInput.classList.add("required-field");
               break;  
+            case "create_event_permission":
+              orgNameInput.required = true;
+              orgNameInput.classList.add("required-field");  
+              eventTitleInput.required = true;
+              eventTitleInput.classList.add("required-field");
+              break;   
           }
         }
 
