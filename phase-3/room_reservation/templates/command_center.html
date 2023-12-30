@@ -25,6 +25,7 @@
       document.addEventListener('DOMContentLoaded', function () {
         const commandSelect = document.getElementById('command');
         const fields = {
+          submitbutton: document.getElementById('submitbutton').closest('button'),
           orgname: document.getElementById('org_name').closest('div'),
           roomname: document.getElementById('room_name').closest('div'),
           x: document.getElementById('x').closest('div'),
@@ -69,28 +70,27 @@
         }
     
         const fieldMapping = {
-          create_organization: ['orgname', 'description', 'perm_list', 'perm_access', 'perm_delete', 'perm_add'],
-          update_organization: ['orgname', 'value', 'field'],
-          list_rooms: ['orgname'],
-          list_events: ['orgname'],
-          create_room: ['orgname', 'roomname', 'x', 'y', 'capacity', 'working_hours'],
-          access_room: ['orgname', 'roomname'],
-          delete_room: ['orgname', 'roomname'],
-          update_room: ['orgname', 'roomname', 'x', 'y', 'capacity', 'working_hours'],
-          list_room_events: ['orgname', 'roomname'],
-          create_reservation: ['orgname', 'roomname', 'event_title', 'start_time', 'duration','weekly', 'description'],
-          delete_reservation: ['orgname', 'roomname', 'event_title', 'start_time'],
-          create_event: ['orgname', 'event_title', 'start_time', 'duration', 'capacity', 'description', 'category'],
-          update_event: ['orgname', 'event_title', 'start_time', 'duration', 'capacity', 'description', 'category'],
-          access_event: ['orgname','event_title' ], //what are params
-          find_schedule: ['event_ids', 'room_id'],
-          room_view: ['orgname', 'start_date', 'end_date'],
-          create_organization_permissions: ['orgname','perm_list', 'perm_access', 'perm_delete', 'perm_add'],
-          create_room_permissions: ['orgname', 'roomname','roomperm_list', 'perm_reserve', 'perm_perreserve', 'roomperm_delete', 'perm_write'],
-          create_event_permission: ['orgname', 'event_title','eventperm_write', 'eventperm_read'],
+          create_organization: ['orgname', 'description', 'perm_list', 'perm_access', 'perm_delete', 'perm_add', 'submitbutton'],
+          update_organization: ['orgname', 'value', 'field', 'submitbutton'],
+          list_rooms: ['orgname', 'submitbutton'],
+          list_events: ['orgname', 'submitbutton'],
+          create_room: ['orgname', 'roomname', 'x', 'y', 'capacity', 'working_hours', 'submitbutton'],
+          access_room: ['orgname', 'roomname', 'submitbutton'],
+          delete_room: ['orgname', 'roomname', 'submitbutton'],
+          update_room: ['orgname', 'roomname', 'x', 'y', 'capacity', 'working_hours', 'submitbutton'],
+          list_room_events: ['orgname', 'roomname', 'submitbutton'],
+          create_reservation: ['orgname', 'roomname', 'event_title', 'start_time', 'duration','weekly', 'description', 'submitbutton'],
+          delete_reservation: ['orgname', 'roomname', 'event_title', 'start_time', 'submitbutton'],
+          create_event: ['orgname', 'event_title', 'start_time', 'duration', 'capacity', 'description', 'category', 'submitbutton'],
+          update_event: ['orgname', 'event_title', 'start_time', 'duration', 'capacity', 'description', 'category', 'submitbutton'],
+          access_event: ['orgname','event_title', 'submitbutton' ], //what are params
+          room_view: ['orgname', 'start_date', 'end_date', 'submitbutton'],
+          create_organization_permissions: ['orgname','perm_list', 'perm_access', 'perm_delete', 'perm_add', 'submitbutton'],
+          create_room_permissions: ['orgname', 'roomname','roomperm_list', 'perm_reserve', 'perm_perreserve', 'roomperm_delete', 'perm_write', 'submitbutton'],
+          create_event_permission: ['orgname', 'event_title','eventperm_write', 'eventperm_read', 'submitbutton'],
           // Assuming attach and detach are valid commands and event_ids, room_id are the corresponding fields
-          attach: ['room_id', 'event_ids'],
-          detach: ['room_id', 'event_ids']
+          attach: ['room_id', 'event_ids', 'submitbutton'],
+          detach: ['room_id', 'event_ids', 'submitbutton']
         };
     
         function handleCommandChange() {
@@ -359,7 +359,7 @@
         </div>
       </fieldset>
     </div>
-      <button class="button" type="submit">Execute Command</button>
+      <button id = "submitbutton" class="button" type="submit">Execute Command</button>
     </form>
 
   </body>
