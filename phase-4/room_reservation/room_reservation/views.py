@@ -304,7 +304,9 @@ def list_rooms(request):
 
     data = {'action': 'list_rooms'}
     data['org_name'] = request.POST.get('org_name')
-    response = send_command_to_phase2_server(data, token)
+
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -344,7 +346,8 @@ def create_room(request):
             'y': request.POST.get('y')
             }
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -380,7 +383,7 @@ def create_room_permission(request):
     for permission in permissions:
         permission_request[permission] = 'true'
 
-    permission_response = send_command_to_phase2_server(permission_request, token)
+    permission_response = sync_send_command_to_webserver(permission_request, token)
 
     try:
         permission_response = json.loads(permission_response)
@@ -408,7 +411,8 @@ def get_room(request):
             'room_name': request.POST.get('room_name')
             }
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
     try:
         response = json.loads(response)
         response = response.get('response', 'Invalid response from phase2 server in get_room')
@@ -428,7 +432,8 @@ def delete_room(request):
             'org_name': request.POST.get('org_name'),
             'room_name': request.POST.get('room_name')}
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -458,7 +463,8 @@ def update_room(request):
             'x': request.POST.get('x'),
             'y': request.POST.get('y')}
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -487,7 +493,8 @@ def list_room_events(request):
         'room_name': request.POST.get('room_name')
     }
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -522,7 +529,8 @@ def create_event(request):
         'category': request.POST.get('category')
     }
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -545,7 +553,8 @@ def list_events(request):
         'org_name': request.POST.get('org_name')
     }
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -572,25 +581,29 @@ def create_reservation(request):
     description = command['description']
     """
     token = request.session['token']
+    start_date = request.POST.get('start_date')  # e.g., '2024-01-19'
+    start_time = request.POST.get('start_hour')  # e.g., '09:00'
 
     data = {
         'action': 'create_reservation',
         'org_name': request.POST.get('org_name'),
         'room_name': request.POST.get('room_name'),
         'event_title': request.POST.get('event_title'),
-        'start_time': request.POST.get('start_time'),
+        'start_time': f'{start_date} {start_time}',
         'duration': request.POST.get('duration'),
         'weekly': request.POST.get('weekly'),
         'description': request.POST.get('description')
     }
     if data['weekly']:
         data['action'] = 'create_perreservation'
-    response = send_command_to_phase2_server(data, token)
+
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
-        response_message = response.get('response', 'Invalid response from phase2 in update event')
-        context = {'response_message': response_message, 'title': 'Update Event Response'}
+        response_message = response.get('response', 'Invalid response from phase2 in create_reservation')
+        context = {'response_message': response_message, 'title': 'Reservation Response'}
 
         return render(request, 'response_template.html', context)
 
@@ -621,7 +634,8 @@ def update_event(request):
         'category': request.POST.get('category')
     }
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -648,7 +662,7 @@ def access_event(request):
         'event_title': request.POST.get('event_title')
     }
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
 
     try:
         response = json.loads(response)
@@ -673,7 +687,8 @@ def delete_event(request):
         'event_title': request.POST.get('event_title')
     }
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -705,7 +720,8 @@ def create_event_permission(request):
     for permission in permissions:
         data[permission + "_permission"] = 'true'
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         permission_response = json.loads(response)
@@ -736,7 +752,8 @@ def room_view(request):
     }
 
 
-    response = send_command_to_phase2_server(data, token)
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -776,7 +793,9 @@ def find_schedule(request):
         'date': request.POST.get('schedule_date'),
         'working_hours': request.POST.get('schedule_working_hours')
     }
-    response = send_command_to_phase2_server(data, token)
+
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
