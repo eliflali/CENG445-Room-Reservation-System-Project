@@ -23,6 +23,7 @@
         text-align: center;
       }
     </style>
+    {% load static %} <!-- Load the static files tag library here -->
   </head>
   <body>
     <h1>ROOMS</h1>
@@ -58,7 +59,9 @@
     <h1>SVG Map</h1>
   
     <!-- SVG Map -->
-    <svg height="1024" width="1024" style="background-color: #f9f9f9;">
+    <svg height="1024" width="1024">
+      <image href="{% static 'metu-campus.png' %}" height="1024" width="1024"/>
+
         {% for room in rooms %}
         <!-- Definitions for gradients and filters -->
         <defs>

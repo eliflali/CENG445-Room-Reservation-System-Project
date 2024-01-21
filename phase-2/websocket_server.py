@@ -28,15 +28,11 @@ async def write_agent(websocket, path, command):
             cmd = await command.getCommand()
             if cmd:
                 # Serialize the result of getCommand, not the coroutine itself
-                print("server-31")
                 cmd_json = json.dumps(cmd) if not isinstance(cmd, str) else cmd
-                print("server-33")
                 await websocket.send(cmd_json)
-                print("server-35")
                 # Process the command JSON to check for notifications
                 try:
                     cmd_json = json.loads(cmd)
-                    print("server-39")
 
                     if cmd['response'] == "Login successful and this is your token: ":
                         token = cmd_json.get('token', '')
@@ -68,9 +64,7 @@ async def read_agent(websocket, path, command):
             print(f"Received command: {raw_command}")
             # Await the process_command coroutine
             processed_command = await CommandOperations.process_command(raw_command)
-            print("server-64")
             await command.newCommand(processed_command)
-            print("server-66")
     except ConnectionClosedOK:
         print("Client is terminating")
     except ConnectionClosedError:
