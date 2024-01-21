@@ -83,14 +83,35 @@
         <text x="45" y="55" fill="black" font-family="Arial" font-size="14px">Room</text>
         
         <!-- Draw rooms with gradient fill and shadow -->
-        <rect x="{{ room.x }}" y="{{ room.y }}" width="80" height="50"
-            style="fill:url(#roomGradient);stroke:black;stroke-width:1;filter:url(#f1);" />
-        <text x="{{ room.x }}" y="{{ room.y }}" dx="10" dy="30" fill="black" font-family="Arial" font-size="14px" font-weight="bold">
-            {{ room.name }}
-        </text>
+        <a xlink:href="#" id="room-{{ room.id }}" class="room" data-organization-name="{{ room.organization }}" data-room-name="{{ room.name }}">
+          <rect x="{{ room.x }}" y="{{ room.y }}" width="80" height="50"
+                style="fill:url(#roomGradient);stroke:black;stroke-width:1;filter:url(#f1);" />
+          <text x="{{ room.x }}" y="{{ room.y }}" dx="10" dy="30" fill="black" font-family="Arial" font-size="14px" font-weight="bold">
+              {{ room.name }}
+          </text>
+        </a>
         {% endfor %}
         <!-- Additional indicators can go here -->
         
     </svg>
+    <script>
+      // Function to handle clicking on a room
+      function handleRoomClick(organizationName, roomName) {
+        window.location.href = `/room/${organizationName}/${roomName}/`;
+      }
+
+    
+      // Add click event listeners to all room elements
+      document.querySelectorAll('.room').forEach(roomElement => {
+        roomElement.addEventListener('click', function(event) {
+          event.preventDefault();
+          var roomName = this.dataset.roomName; // Assuming you have data-room-name attribute
+          var organizationName = this.dataset.organizationName; // Assuming you have data-organization-name attribute
+          handleRoomClick(organizationName, roomName);
+        });
+      });
+
+    </script>
+    
   </body>
 </html>

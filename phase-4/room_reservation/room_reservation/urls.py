@@ -31,6 +31,6 @@ urlpatterns = [
      path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('execute-login/', views.execute_login, name='execute_login'),
     path('register/', views.register_view, name='register'),
-    path('find-schedule/', views.find_schedule, name='find-schedule')
-    
+    path('find-schedule/', views.find_schedule, name='find-schedule'),
+    path('room/<str:organization_name>/<str:room_name>/', views.room_detail, name='room_detail')
 ]  + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

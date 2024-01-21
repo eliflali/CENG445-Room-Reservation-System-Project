@@ -422,6 +422,31 @@ def get_room(request):
         return JsonResponse({'error': 'Something went wrong while get room.'}, status=500)
 
 @csrf_exempt
+def room_detail(request, organization_name, room_name):
+    #room = get_object_or_404(Room, name=room_name, organization__name=organization_name)
+
+    token = request.session['token']
+
+    data = {'action': 'access_room',
+            'org_name': organization_name,
+            'room_name': room_name
+            }
+
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
+    try:
+        response = json.loads(response)
+        room = response.get('response', 'Invalid response from phase2 server in get_room')
+        context = {'room': room}
+        return render(request, 'clicked-room.html', context)
+    except Exception as e:
+        print(e)  # Log the error to the console or use Django's logging framework
+        context = {'error': 'Something went wrong while getting the room.'}
+        return render(request, 'clicked-room.html', context)
+
+    
+    
+@csrf_exempt
 def delete_room(request):
     """
     org_name = command['org_name']
