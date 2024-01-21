@@ -97,8 +97,10 @@
     <script>
       // Function to handle clicking on a room
       function handleRoomClick(organizationName, roomName) {
-        window.location.href = `/room/${organizationName}/${roomName}/`;
+        var url = `/room/${encodeURIComponent(organizationName)}/${encodeURIComponent(roomName)}/`;
+        window.location.href = url;
       }
+
 
     
       // Add click event listeners to all room elements
