@@ -1,49 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Event Scheduler</title>
-    <!-- Add JQuery UI CSS and other necessary styles here -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <style>
+        .tabs-container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        .weekly-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .weekly-grid th,
+        .weekly-grid td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .weekly-grid th {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
-<div id="room-tabs">
-    <ul>
-        {% for room_name, events in room_events.items %}
-        <li><a href="#{{ room_name|slugify }}">{{ room_name }}</a></li>
-        {% empty %}
-        <li>No rooms available</li>
-        {% endfor %}
-    </ul>
-    {% for room_name, events in room_events.items %}
-    <div id="{{ room_name|slugify }}">
-        <!-- Render events for each room here -->
-        <table class="grid-table">
-            <tr>
-                <th>Event</th>
-                <th>Start Time</th>
-                <th>Duration</th>
-                <!-- Add more columns as needed -->
-            </tr>
-            {% for event in events %}
-            <tr>
-                <td>{{ event.title }}</td>
-                <td>{{ event.start_time }}</td>
-                <td>{{ event.duration }}</td>
-                <!-- Add more event details as needed -->
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="3">No events scheduled</td>
-            </tr>
-            {% endfor %}
-        </table>
+<div class="tabs-container">
+    <h1>Event Scheduler</h1>
+    <div id="tabs">
+        <ul>
+            <li><a href="#rooms-tab">Rooms View</a></li>
+            <li><a href="#days-tab">Days View</a></li>
+        </ul>
+        <div id="rooms-tab">
+            <div id="room-tabs">
+                <ul>
+                    {% for room in rooms %}
+                    <li><a href="#room-{{ room.id }}">{{ room.name }}</a></li>
+                    {% endfor %}
+                </ul>
+                {% for room in rooms %}
+                <div id="room-{{ room.id }}">
+                    <h2>{{ room.name }} Weekly Schedule</h2>
+                    <table class="weekly-grid">
+                        <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>Time</th>
+                                <th>Event</th>
+                            </tr>
+                        </thead>
+                        <tbody id="room-{{ room.id }}-events">
+                            <!-- Events for this room will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div id="days-tab">
+            <label for="select-day">Select Day: </label>
+            <select id="select-day">
+                <option value="monday">Monday</option>
+                <option value="tuesday">Tuesday</option>
+                <option value="wednesday">Wednesday</option>
+                <option value="thursday">Thursday</option>
+                <option value="friday">Friday</option>
+            </select>
+            <h2>Day View</h2>
+            <table class="weekly-grid">
+                <thead>
+                    <tr>
+                        <th>Room</th>
+                        <th>Time</th>
+                        <th>Event</th>
+                    </tr>
+                </thead>
+                <tbody id="selected-day-events">
+                    <!-- Events for the selected day will be loaded here -->
+                </tbody>
+            </table>
+        </div>
     </div>
-    {% endfor %}
 </div>
 
-<!-- Add JQuery and JQuery UI scripts here -->
 <script>
-    $(document).ready(function() {
-        $("#room-tabs").tabs();
+    $(function () {
+        $("#tabs").tabs({
+            activate: function (event, ui) {
+                fetchData(ui.newPanel.attr('id'));
+            }
+        });
+
+        function fetchData(tabId) {
+            if (tabId === 'rooms-tab') {
+                // Fetch data for Rooms View
+                {% for room in rooms %}
+                $.ajax({
+                    url: `/fetch-room-events/${{ room.id }}/`, // Replace with your Django URL
+                    method: 'GET',
+                    success: function (data) {
+                        const eventsHtml = data.map(event => `<tr><td>${event.day}</td><td>${event.time}</td><td>${event.title}</td></tr>`).join('');
+                        $(`#room-${{ room.id }}-events`).html(eventsHtml);
+                    }
+                });
+                {% endfor %}
+            } else if (tabId === 'days-tab') {
+                // Fetch data for Day View based on selected day
+                const selectedDay = $('#select-day').val();
+                $.ajax({
+                    url: `/fetch-selected-day-events/${selectedDay}/`, // Replace with your Django URL
+                    method: 'GET',
+                    success: function (data) {
+                        const eventsHtml = data.map(event => `<tr><td>${event.room.name}</td><td>${event.time}</td><td>${event.title}</td></tr>`).join('');
+                        $('#selected-day-events').html(eventsHtml);
+                    }
+                });
+            }
+        }
     });
 </script>
 </body>
