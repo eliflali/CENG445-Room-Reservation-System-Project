@@ -4,32 +4,136 @@
     <meta charset="UTF-8" />
     <title>Command Center</title>
     <style>
-      .button {
-      display: inline-block;
-      padding: 10px 20px;
-      margin: 10px;
-      background-color: #4CAF50;
-      color: white;
-      text-align: center;
-      text-decoration: none;
-      border-radius: 5px;
-      cursor: pointer;
-      border: none;
-    }
-    .room-view-button {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #007BFF; /* Blue background color */
-    color: #fff; /* White text color */
-    text-decoration: none; /* Remove underlines */
-    border-radius: 5px; /* Rounded corners */
-    transition: background-color 0.3s; /* Smooth background color transition on hover */
+/* General Styles */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #e9ecef;
+  color: #495057;
+  line-height: 1.5;
+  margin: 0;
+  padding: 20px;
+}
 
-    /* Center the button horizontally and vertically */
-    text-align: center;
-    line-height: 1.6em;
-    }
+h1 {
+  text-align: center;
+  color: #007bff;
+}
 
+/* Form Styling */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #007bff;
+  font-weight: 600;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group input[type="time"],
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  box-shadow: 0px 0px 5px 0px rgba(0, 123, 255, 0.5);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.form-group input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus,
+.form-group input[type="date"]:focus,
+.form-group input[type="time"]:focus,
+.form-group select:focus {
+  box-shadow: 0px 0px 8px 0px rgba(0, 123, 255, 0.8);
+}
+
+/* Button Styling */
+.button {
+  background-image: linear-gradient(to right, #007bff, #0056b3);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background-image 0.3s ease-in-out;
+}
+
+.button:hover {
+  background-image: linear-gradient(to right, #0056b3, #003874);
+}
+
+/* Fieldset Styling */
+fieldset {
+  border: 2px solid #007bff;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+legend {
+  width: auto;
+  padding: 0 10px;
+  color: #007bff;
+  font-weight: bold;
+}
+
+/* Layout Adjustments */
+.option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+
+    #message-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: auto;
+        z-index: 1000;
+      }
+
+      .notification {
+        background-color: #333; /* Dark background */
+        color: #fff; /* White text color */
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        margin-bottom: 10px; /* Spacing between messages */
+        opacity: 0.9; /* Slight transparency */
+        transition: opacity 0.5s linear; /* Fade effect */
+      }
+
+      .notification:hover {
+        opacity: 1; /* Fully opaque on hover */
+      }
+
+      .notification.error {
+        background-color: #d9534f; /* Bootstrap's `btn-danger` color */
+      }
+
+      /* Optional: keyframes for a fade-in effect */
+      @keyframes fadeIn {
+        from { bottom: 0; opacity: 0; }
+        to { bottom: 20px; opacity: 0.9; }
+      }
+
+      .notification.fade-in {
+        animation-name: fadeIn;
+        animation-duration: 0.5s;
+      }
     /* Style the button on hover */
     .room-view-button:hover {
         background-color: #0056b3; /* Darker blue on hover */
