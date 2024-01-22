@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Event Scheduler</title>
+    <!-- Add JQuery UI CSS and other necessary styles here -->
+</head>
+<body>
+<div id="room-tabs">
+    <ul>
+        {% for room_name, events in room_events.items %}
+        <li><a href="#{{ room_name|slugify }}">{{ room_name }}</a></li>
+        {% empty %}
+        <li>No rooms available</li>
+        {% endfor %}
+    </ul>
+    {% for room_name, events in room_events.items %}
+    <div id="{{ room_name|slugify }}">
+        <!-- Render events for each room here -->
+        <table class="grid-table">
+            <tr>
+                <th>Event</th>
+                <th>Start Time</th>
+                <th>Duration</th>
+                <!-- Add more columns as needed -->
+            </tr>
+            {% for event in events %}
+            <tr>
+                <td>{{ event.title }}</td>
+                <td>{{ event.start_time }}</td>
+                <td>{{ event.duration }}</td>
+                <!-- Add more event details as needed -->
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No events scheduled</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Add JQuery and JQuery UI scripts here -->
+<script>
+    $(document).ready(function() {
+        $("#room-tabs").tabs();
+    });
+</script>
+</body>
+</html>

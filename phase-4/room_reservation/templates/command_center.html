@@ -47,7 +47,7 @@
           field: document.getElementById("field").closest('div'),
           value: document.getElementById("value").closest('div'),
           observation_type: document.getElementById("observation_type").closest('div'),
-          
+
           perm_list: document.getElementById('perm_list').closest('div'),
           perm_access: document.getElementById('perm_access').closest('div'),
           perm_add: document.getElementById('perm_add').closest('div'),
@@ -217,13 +217,12 @@
       </div>
       <div id="start_date" class="form-group optional-form-group">
         <label for="start_date_input">Start Date:</label>
-        <input type="date" id="start_date_input" name="start_date" style="display: inline-block; width: auto;">
-        <input type="time" id="start_time_input" name="start_hour" style="display: inline-block; width: auto;">
+        <input type="text" id="start_date_input" placeholder="e.g 2023-01-30 19:00 (Y-m-d h:m)" name="start_date" style="display: inline-block; width: auto;">
     </div>
     
       <div id = "end_date" class="form-group optional-form-group">
         <label for="end_date">End Date:</label>
-        <input type="text" id="end_date" name="end_date" />
+        <input type="text" id="end_date" placeholder="e.g 2023-01-30 19:00 (Y-m-d h:m)" name="end_date" />
       </div>
       <div id = "event_title" class="form-group optional-form-group">
         <label for="event_title">Event Title: </label>
@@ -237,7 +236,7 @@
 
       <div id = "end_time" class="form-group optional-form-group">
         <label for="end_time">End Time: </label>
-        <input type="text" id="end_time" name="end_time" />
+        <input type="time" id="end_time" name="end_time" />
       </div>
 
       <div id = "duration" class="form-group optional-form-group">

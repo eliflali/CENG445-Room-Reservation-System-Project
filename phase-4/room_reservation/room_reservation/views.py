@@ -14,6 +14,8 @@ from asgiref.sync import async_to_sync
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from .decorators import login_required  # Import the decorator
+import threading
+import time
 
 logger = logging.getLogger(__name__)
 notification_buffer = []
@@ -30,7 +32,7 @@ def send_notification(request):
 @csrf_exempt
 def send_command_to_phase2_server(command: dict, token: str = None):
     phase2_server_host = 'localhost'
-    phase2_server_port = 12345
+    phase2_server_port = 12346
 
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -93,6 +95,43 @@ def sync_send_command_to_webserver(command: dict, token: str = None):
 def login_view(request):
     return render(request, 'login.html')
 
+
+def repeat_request(view_func):
+    def wrapper(request, *args, **kwargs):
+        # Initial call to the view function
+        initial_response = view_func(request, *args, **kwargs)
+
+        # Check if the initial response is JSON
+        if initial_response['Content-Type'] == 'application/json':
+            try:
+                initial_data = json.loads(initial_response.content)
+            except json.JSONDecodeError:
+                return HttpResponse("Error: Response is not valid JSON", status=500)
+        else:
+            # If not JSON, return the response as is
+            return initial_response
+
+        # Function to call the view again after 0.5 seconds
+        def delayed_call():
+            time.sleep(0.5)
+            followup_response = view_func(request, *args, **kwargs)
+            if followup_response['Content-Type'] == 'application/json':
+                try:
+                    followup_data = json.loads(followup_response.content)
+                    if followup_data != initial_data:
+                        return JsonResponse({'refresh': True})
+                except json.JSONDecodeError:
+                    return HttpResponse("Error: Follow-up response is not valid JSON", status=500)
+            return followup_response
+
+        # Start the delayed call in a separate thread
+        delayed_thread = threading.Thread(target=delayed_call)
+        delayed_thread.start()
+        delayed_thread.join()  # Wait for the thread to finish
+
+        return initial_response
+
+    return wrapper
 
 @csrf_exempt
 def execute_login(request):
@@ -275,6 +314,7 @@ def update_organization(request):
         return JsonResponse({'error': 'Invalid field name or something went wrong in phase-2 server while updating organization.'}, status=500)
 
 @csrf_exempt
+@repeat_request
 def list_organizations(request):
     """
     This endpoint will list all the organizations.
@@ -296,6 +336,44 @@ def list_organizations(request):
         return JsonResponse({'error': 'Something went wrong while list organizations'}, status=500)
 
 @csrf_exempt
+def organizations_json(request):
+    """
+    This endpoint returns all the organizations in JSON format.
+    """
+    token = request.session.get('token')
+
+    data = {'action': 'list_organizations'}
+
+    response = sync_send_command_to_webserver(data, token)
+    # Alternatively, response = send_command_to_phase2_server(data, token)
+
+    try:
+        print(response)  # Debugging statement
+        return HttpResponse(response, content_type="application/json")
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Something went wrong while fetching organizations'}, status=500)
+
+@csrf_exempt
+def rooms_json(request, org_name, token):
+    """
+    This endpoint returns all the rooms for a given organization in JSON format.
+    """
+    print(request)
+    if request.method == 'GET':
+        data = {'action': 'list_rooms', 'org_name': org_name}
+
+        try:
+            # Replace this with your actual data retrieval logic
+            # Example: response = sync_send_command_to_webserver(data, token)
+            response = sync_send_command_to_webserver(data, token)
+
+            return HttpResponse(response, content_type="application/json")
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+        
+@csrf_exempt
 def list_rooms(request):
     """
     This endpoint will list all the rooms belong to the given org_name.
@@ -312,12 +390,13 @@ def list_rooms(request):
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 server.')
         if response_message == "You don't have permission.":
-            context = {'response_message': response_message, 'title': 'List Rooms'}
+            context = {'response_message': response_message, 'title': 'List Rooms', 'org_name': request.POST.get('org_name'), 'token': token}
             return render(request, 'response_template.html', context)
             pass
-        context = {'rooms': response_message, 'title': 'List Rooms'}
+        context = {'rooms': response_message, 'title': 'List Rooms', 'org_name': request.POST.get('org_name'), 'token': token}
 
         return render(request, 'list_rooms.html', context)
+
     except:
         return JsonResponse({'error': 'Something went wrong while list rooms.'}, status=500)
 
@@ -591,6 +670,25 @@ def create_event(request):
         return JsonResponse({'error': 'Failed to decode response from server in create event'}, status=500)
 
 @csrf_exempt
+def events_json(request, org_name, token):
+    """
+    This endpoint returns all the rooms for a given organization in JSON format.
+    """
+    if request.method == 'GET':
+        data = {'action': 'list_events', 'org_name': org_name}
+
+        try:
+            # Replace this with your actual data retrieval logic
+            # Example: response = sync_send_command_to_webserver(data, token)
+            response = sync_send_command_to_webserver(data, token)
+
+            return HttpResponse(response, content_type="application/json")
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+@csrf_exempt
 def list_events(request):
     """
     org_name = command['org_name']
@@ -612,7 +710,7 @@ def list_events(request):
             context = {'response_message': response_message, 'title': 'List Events'}
             return render(request, 'response_template.html', context)
             pass
-        context = {'events': response_message, 'title': 'List Events Response'}
+        context = {'events': response_message, 'title': 'List Events Response', 'org_name': request.POST.get('org_name'), 'token': token}
 
         return render(request, 'list_events.html', context)
     except json.JSONDecodeError:
@@ -826,25 +924,21 @@ def room_view(request):
     end_datetime_str = command['end_date']
     """
     token = request.session['token']
-
     data = {
         'action': 'room_view',
         'org_name': request.POST.get('org_name'),
         'start_date': request.POST.get('start_date'),
-        'end_date': request.POST.get('end_date')
+        'end_date': request.POST.get('end_date'),
     }
 
 
     response = sync_send_command_to_webserver(data, token)
     #response = send_command_to_phase2_server(data, token)
-
     try:
         response = json.loads(response)
         response = response.get('response', 'Invalid response for permission from server')
-
         context = {'response_message': response,
                    'title': 'Room View'}
-
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
