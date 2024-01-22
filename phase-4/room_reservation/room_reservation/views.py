@@ -26,8 +26,9 @@ def index(request):
 def send_notification(request):
     if(len(notification_buffer) > 0):
         for notification in notification_buffer:
-            messages.success(request, notification[0]['notification'])
-            notification_buffer.pop(0)
+            notif = notification_buffer.pop(0)
+            messages.success(request, notif[0]['notification'])
+            
 
 @csrf_exempt
 def send_command_to_phase2_server(command: dict, token: str = None):
@@ -730,7 +731,6 @@ def create_reservation(request):
     token = request.session['token']
     start_date = request.POST.get('start_date')  # e.g., '2024-01-19'
     start_time = request.POST.get('start_hour')  # e.g., '09:00'
-
     data = {
         'action': 'create_reservation',
         'org_name': request.POST.get('org_name'),
@@ -758,6 +758,61 @@ def create_reservation(request):
         if(room_users is not None):
             for user in room_users:
                 notification_buffer.append([{"user": user, "notification": data['event_title'] + " reserved " + data['room_name'] + " at time " + data['start_time']}])
+
+        context = {'response_message': response_message, 'title': 'Reservation Response'}
+
+        send_notification(request)
+
+        return render(request, 'response_template.html', context)
+
+    except json.JSONDecodeError:
+        return HttpResponse('Invalid response from phase2 in update event')
+
+"""
+elif command['action'] == 'delete_reservation':
+                    token = command['token']
+                    org_name = command['org_name']
+                    room_name = command['room_name']
+                    event_title = command['event_title']
+                    start_time = command['start_time']
+"""
+
+@csrf_exempt
+def delete_reservation(request):
+    """
+    org_name = command['org_name']
+    room_name = command['room_name']
+    event_title = command['event_title']
+    start_time = command['start_time']
+    duration = command['duration']
+    weekly = command['weekly']
+    description = command['description']
+    """
+    token = request.session['token']
+    start_date = request.POST.get('start_date')  # e.g., '2024-01-19'
+    start_time = request.POST.get('start_hour')  # e.g., '09:00'
+    data = {
+        'action': 'delete_reservation',
+        'org_name': request.POST.get('org_name'),
+        'room_name': request.POST.get('room_name'),
+        'event_title': request.POST.get('event_title'),
+        'start_time': f'{start_date} {start_time}'
+    }
+
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from phase2 in create_reservation')
+        event_users = response.get('event_users')
+        room_users = response.get('room_users')
+        if(event_users is not None):
+            for user in event_users:
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " reservation deleted " + data['room_name'] + " at time " + data['start_time'] }])
+        if(room_users is not None):
+            for user in room_users:
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " reservation deleted " + data['room_name'] + " at time " + data['start_time']}])
 
         context = {'response_message': response_message, 'title': 'Reservation Response'}
 
@@ -924,11 +979,15 @@ def room_view(request):
     end_datetime_str = command['end_date']
     """
     token = request.session['token']
+    start_date = request.POST.get('start_date')  # e.g., '2024-01-19'
+    start_time = request.POST.get('start_hour')  # e.g., '09:00'
+    end_date = request.POST.get('end_date')  # e.g., '2024-01-19'
+    end_time = request.POST.get('end_hour')  # e.g., '09:00'
     data = {
         'action': 'room_view',
         'org_name': request.POST.get('org_name'),
-        'start_date': request.POST.get('start_date'),
-        'end_date': request.POST.get('end_date'),
+        'start_date': f'{start_date} {start_time}',
+        'end_date': f'{end_date} {end_time}',
     }
 
 
@@ -1105,6 +1164,8 @@ def process_request(request):
         return attach(request)
     elif command == 'detach':
         return detach(request)
+    elif command == 'delete_reservation':
+        return delete_reservation(request)
     elif command == 'find_schedule':
         print("inside find_schedule")
         return redirect("find-schedule")

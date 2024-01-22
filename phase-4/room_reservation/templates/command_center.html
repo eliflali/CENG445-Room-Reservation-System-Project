@@ -82,9 +82,9 @@
           update_room: ['orgname', 'roomname', 'x', 'y', 'capacity', 'working_hours', 'submitbutton'],
           list_room_events: ['orgname', 'roomname', 'submitbutton'],
           create_reservation: ['orgname', 'roomname', 'event_title', 'start_date', 'duration','weekly', 'description', 'submitbutton'],
-          delete_reservation: ['orgname', 'roomname', 'event_title', 'start_time', 'submitbutton'],
-          create_event: ['orgname', 'event_title', 'start_time', 'duration', 'capacity', 'description', 'category', 'submitbutton'],
-          update_event: ['orgname', 'event_title', 'start_time', 'duration', 'capacity', 'description', 'category', 'submitbutton'],
+          delete_reservation: ['orgname', 'roomname', 'event_title', 'start_date', 'submitbutton'],
+          create_event: ['orgname', 'event_title', 'start_date', 'duration', 'capacity', 'description', 'category', 'submitbutton'],
+          update_event: ['orgname', 'event_title', 'start_date', 'duration', 'capacity', 'description', 'category', 'submitbutton'],
           access_event: ['orgname','event_title', 'submitbutton' ], //what are params
           room_view: ['orgname', 'start_date', 'end_date', 'submitbutton'],
           create_organization_permissions: ['orgname','perm_list', 'perm_access', 'perm_delete', 'perm_add', 'submitbutton'],
@@ -217,12 +217,14 @@
       </div>
       <div id="start_date" class="form-group optional-form-group">
         <label for="start_date_input">Start Date:</label>
-        <input type="text" id="start_date_input" placeholder="e.g 2023-01-30 19:00 (Y-m-d h:m)" name="start_date" style="display: inline-block; width: auto;">
+        <input type="date" id="start_date_input" name="start_date" style="display: inline-block; width: auto;">
+        <input type="time" id="start_time_input" name="start_hour" style="display: inline-block; width: auto;">
     </div>
     
       <div id = "end_date" class="form-group optional-form-group">
         <label for="end_date">End Date:</label>
-        <input type="text" id="end_date" placeholder="e.g 2023-01-30 19:00 (Y-m-d h:m)" name="end_date" />
+        <input type="date" id="end_date_input" name="end_date" style="display: inline-block; width: auto;">
+        <input type="time" id="end_time_input" name="end_hour" style="display: inline-block; width: auto;">
       </div>
       <div id = "event_title" class="form-group optional-form-group">
         <label for="event_title">Event Title: </label>

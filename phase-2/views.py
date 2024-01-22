@@ -399,6 +399,7 @@ def roomView(user: str, org: str, start_datetime_str, end_datetime_str):
     start_datetime = datetime.strptime(start_datetime_str, "%Y-%m-%d %H:%M")
     end_datetime = datetime.strptime(end_datetime_str, "%Y-%m-%d %H:%M")
 
+
     for room in rooms:
         reservations = reservation_manager.get_reservations_for_room(room['id'])
         events = []
@@ -407,11 +408,16 @@ def roomView(user: str, org: str, start_datetime_str, end_datetime_str):
             continue
         
         for reservation in reservations:
+            if(reservation['description'] == 'DoggyBag'):
+                continue
             try:
-                reservation_start = datetime.strptime(reservation['start_time'], "%Y-%m-%d %H:%M:%S")
+                
+                reservation_start = datetime.strptime(reservation['start_time'], "%Y-%m-%d %H:%M")
+                
             except ValueError:
                 # Fallback for format without seconds
-                reservation_start = datetime.strptime(reservation['start_time'], "%Y-%m-%d %H:%M")
+                reservation_start = datetime.strptime(reservation['start_time'], "%Y-%m-%d %H:%M:%S")
+                return None
             
             reservation_end = reservation_start + timedelta(minutes=reservation['duration'])
 
