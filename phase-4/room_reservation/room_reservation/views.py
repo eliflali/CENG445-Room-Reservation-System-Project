@@ -24,12 +24,32 @@ def index(request):
     return render(request, 'index.html')
 
 def send_notification(request):
+    token = request.session['token']
+    print(request.POST)
+    data = {
+        'action': 'get_user'
+    }
+
+    response = sync_send_command_to_webserver(data, token)
+
+    try:
+        response = json.loads(response)
+        user = response.get('response', 'Invalid response for create room from server')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Failed to decode response from server in create room'}, status=500)
+
+    if not user:
+        pass
+
     if(len(notification_buffer) > 0):
         for notification in notification_buffer:
-            notif = notification_buffer.pop(0)
-            messages.success(request, notif[0]['notification'])
+            if user == notification[0]['user']:
+                notif = notification_buffer.pop(0)
+                messages.success(request, notif[0]['notification'])
+            else:
+                continue
             
-
+            
 @csrf_exempt
 def send_command_to_phase2_server(command: dict, token: str = None):
     phase2_server_host = 'localhost'
@@ -768,14 +788,7 @@ def create_reservation(request):
     except json.JSONDecodeError:
         return HttpResponse('Invalid response from phase2 in update event')
 
-"""
-elif command['action'] == 'delete_reservation':
-                    token = command['token']
-                    org_name = command['org_name']
-                    room_name = command['room_name']
-                    event_title = command['event_title']
-                    start_time = command['start_time']
-"""
+
 
 @csrf_exempt
 def delete_reservation(request):
@@ -1010,7 +1023,6 @@ def attach(request):
     end_datetime_str = command['end_date']
     """
     token = request.session['token']
-    print(request.POST)
     data = {
         'action': 'attach',
         'org_name': request.POST.get('org_name'),

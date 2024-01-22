@@ -20,10 +20,56 @@
     .button:hover {
       background-color: #45a049;
     }
+    #message-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: auto;
+        z-index: 1000;
+      }
+
+      .notification {
+        background-color: #333; /* Dark background */
+        color: #fff; /* White text color */
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        margin-bottom: 10px; /* Spacing between messages */
+        opacity: 0.9; /* Slight transparency */
+        transition: opacity 0.5s linear; /* Fade effect */
+      }
+
+      .notification:hover {
+        opacity: 1; /* Fully opaque on hover */
+      }
+
+      .notification.error {
+        background-color: #d9534f; /* Bootstrap's `btn-danger` color */
+      }
+
+      /* Optional: keyframes for a fade-in effect */
+      @keyframes fadeIn {
+        from { bottom: 0; opacity: 0; }
+        to { bottom: 20px; opacity: 0.9; }
+      }
+
+      .notification.fade-in {
+        animation-name: fadeIn;
+        animation-duration: 0.5s;
+      }
     </style>
     <script>
       document.addEventListener('DOMContentLoaded', function () {
         const commandSelect = document.getElementById('command');
+        var notifications = document.querySelectorAll('.notification');
+        notifications.forEach(function (notification) {
+          setTimeout(function () {
+            notification.style.opacity = '0';
+            setTimeout(function () { // Wait for the opacity transition
+              notification.remove(); // Then remove from DOM
+            }, 500); // Corresponds with the CSS transition duration
+          }, 5000);
+        });
         const fields = {
           submitbutton: document.getElementById('submitbutton').closest('button'),
           orgname: document.getElementById('org_name').closest('div'),
@@ -69,7 +115,7 @@
             fields[key].style.display = 'none';
           }
         }
-    
+        
         const fieldMapping = {
           list_organizations: ['submitbutton'],
           create_organization: ['orgname', 'description', 'perm_list', 'perm_access', 'perm_delete', 'perm_add', 'submitbutton'],
@@ -373,6 +419,15 @@
     </div>
       <button id = "submitbutton" class="button" type="submit">Execute Command</button>
     </form>
-
+     <!-- Container for messages -->
+     <div id="message-container">
+      {% if messages %}
+          {% for message in messages %}
+              <div class="notification fade-in {{ message.tags }}">
+                  {{ message }}
+              </div>
+          {% endfor %}
+      {% endif %}
+  </div>
   </body>
 </html>

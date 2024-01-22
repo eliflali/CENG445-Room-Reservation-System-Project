@@ -317,6 +317,16 @@ class CommandOperations:
                     #response = views.delete_reservation(user, org_name, room_name, event_title, start_time)
                     return json.dumps({"response": response, "room_users": room_users, "event_users": event_users})
                 
+                elif command['action'] == 'get_user':
+                    token = command['token']
+                    user = process_token(token)
+                    print(user)
+                    if not user:
+                        return json.dumps({"response": "Invalid token."})
+                    
+                    return json.dumps({"response": user})
+                    
+                
                 #read_event( org: str, event_title: str):
                 elif command['action'] == 'read_event':
                     token = command['token']
