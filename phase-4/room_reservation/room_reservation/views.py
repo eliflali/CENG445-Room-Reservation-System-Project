@@ -20,17 +20,15 @@ import time
 logger = logging.getLogger(__name__)
 notification_buffer = []
 
-
 def index(request):
     return render(request, 'index.html')
 
-
 def send_notification(request):
-    if (len(notification_buffer) > 0):
+    if(len(notification_buffer) > 0):
         for notification in notification_buffer:
-            messages.success(request, notification[0]['notification'])
-            notification_buffer.pop(0)
-
+            notif = notification_buffer.pop(0)
+            messages.success(request, notif[0]['notification'])
+            
 
 @csrf_exempt
 def send_command_to_phase2_server(command: dict, token: str = None):
@@ -73,7 +71,6 @@ def send_command_to_phase2_server(command: dict, token: str = None):
     except Exception as e:
         return f"Unknown error: {e}"
 
-
 @csrf_exempt
 async def send_command_to_webserver(command: dict, token: str = None):
     webserver_uri = 'ws://localhost:12345'  # WebSocket URI
@@ -85,12 +82,11 @@ async def send_command_to_webserver(command: dict, token: str = None):
     command = json.dumps(command)
     command_dict = {"command": command}
     command_json = json.dumps(command_dict)
-
+    
     async with websockets.connect(webserver_uri) as websocket:
         await websocket.send(command_json)
         response = await websocket.recv()
         return response
-
 
 # Helper function to call the async function from sync code
 def sync_send_command_to_webserver(command: dict, token: str = None):
@@ -137,7 +133,6 @@ def repeat_request(view_func):
         return initial_response
 
     return wrapper
-
 
 @csrf_exempt
 def execute_login(request):
@@ -197,6 +192,7 @@ def register_view(request):
 
         # Send the command to the phase2 server
         response = sync_send_command_to_webserver(command)
+
 
         try:
             response_data = json.loads(response)
@@ -258,14 +254,15 @@ def create_organization(request):
 
     permission_request['org_name'] = request.POST.get('org_name')
     permission_response = sync_send_command_to_webserver(permission_request, token)
-    # permission_response = send_command_to_phase2_server(permission_request, token)
+    #permission_response = send_command_to_phase2_server(permission_request, token)
+
 
     data = {'action': 'create_organization'}
-    data['org_name'] = permission_request['org_name']
+    data['org_name'] = permission_request['org_name'] 
     data['description'] = request.POST.get('description')
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from server')
@@ -293,7 +290,6 @@ def create_organization(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in create organization'}, status=500)
 
-
 @csrf_exempt
 def update_organization(request):
     """
@@ -307,7 +303,7 @@ def update_organization(request):
     data['value'] = request.POST.get('value')
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -316,10 +312,7 @@ def update_organization(request):
 
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
-        return JsonResponse(
-            {'error': 'Invalid field name or something went wrong in phase-2 server while updating organization.'},
-            status=500)
-
+        return JsonResponse({'error': 'Invalid field name or something went wrong in phase-2 server while updating organization.'}, status=500)
 
 @csrf_exempt
 @repeat_request
@@ -332,7 +325,7 @@ def list_organizations(request):
     data = {'action': 'list_organizations'}
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -342,7 +335,6 @@ def list_organizations(request):
         return render(request, 'list_organizations.html', context)
     except:
         return JsonResponse({'error': 'Something went wrong while list organizations'}, status=500)
-
 
 @csrf_exempt
 def organizations_json(request):
@@ -361,7 +353,6 @@ def organizations_json(request):
         return HttpResponse(response, content_type="application/json")
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Something went wrong while fetching organizations'}, status=500)
-
 
 @csrf_exempt
 def rooms_json(request, org_name, token):
@@ -382,8 +373,7 @@ def rooms_json(request, org_name, token):
             return JsonResponse({'error': str(e)}, status=500)
     else:
         return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
-
-
+        
 @csrf_exempt
 def list_rooms(request):
     """
@@ -395,24 +385,21 @@ def list_rooms(request):
     data['org_name'] = request.POST.get('org_name')
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 server.')
         if response_message == "You don't have permission.":
-            context = {'response_message': response_message, 'title': 'List Rooms',
-                       'org_name': request.POST.get('org_name'), 'token': token}
+            context = {'response_message': response_message, 'title': 'List Rooms', 'org_name': request.POST.get('org_name'), 'token': token}
             return render(request, 'response_template.html', context)
             pass
-        context = {'rooms': response_message, 'title': 'List Rooms', 'org_name': request.POST.get('org_name'),
-                   'token': token}
+        context = {'rooms': response_message, 'title': 'List Rooms', 'org_name': request.POST.get('org_name'), 'token': token}
 
         return render(request, 'list_rooms.html', context)
 
     except:
         return JsonResponse({'error': 'Something went wrong while list rooms.'}, status=500)
-
 
 @csrf_exempt
 def create_room(request):
@@ -440,7 +427,7 @@ def create_room(request):
             }
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -471,7 +458,7 @@ def create_room_permission(request):
     permission_request = {'action': 'create_room_permissions',
                           'org_name': request.POST.get('org_name'),
                           'room_name': request.POST.get('room_name'),
-                          }
+    }
     permissions = request.POST.getlist('room_permissions')
     for permission in permissions:
         permission_request[permission] = 'true'
@@ -483,10 +470,10 @@ def create_room_permission(request):
         room_users = permission_response.get('room_users')
         permission_response = permission_response.get('response', 'Invalid response for permission from server')
 
-        if (room_users is not None):
+        
+        if(room_users is not None):
             for user in room_users:
-                notification_buffer.append(
-                    [{"user": user, "notification": permission_request['room_name'] + " permissions updated "}])
+                notification_buffer.append([{"user": user, "notification": permission_request['room_name'] + " permissions updated " }])
 
         context = {'response_message': permission_response,
                    'title': 'Room Permission Response'}
@@ -512,7 +499,7 @@ def get_room(request):
             }
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
     try:
         response = json.loads(response)
         response = response.get('response', 'Invalid response from phase2 server in get_room')
@@ -521,10 +508,9 @@ def get_room(request):
     except:
         return JsonResponse({'error': 'Something went wrong while get room.'}, status=500)
 
-
 @csrf_exempt
 def room_detail(request, organization_name, room_name):
-    # room = get_object_or_404(Room, name=room_name, organization__name=organization_name)
+    #room = get_object_or_404(Room, name=room_name, organization__name=organization_name)
 
     token = request.session['token']
 
@@ -534,7 +520,7 @@ def room_detail(request, organization_name, room_name):
             }
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
     try:
         response = json.loads(response)
         room = response.get('response', 'Invalid response from phase2 server in get_room')
@@ -545,7 +531,8 @@ def room_detail(request, organization_name, room_name):
         context = {'error': 'Something went wrong while getting the room.'}
         return render(request, 'clicked-room.html', context)
 
-
+    
+    
 @csrf_exempt
 def delete_room(request):
     """
@@ -558,16 +545,16 @@ def delete_room(request):
             'room_name': request.POST.get('room_name')}
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
         room_users = response.get('room_users')
         response = response.get('response', 'Invalid response from phase2 server in delete_room')
-
-        if (room_users is not None):
+        
+        if(room_users is not None):
             for user in room_users:
-                notification_buffer.append([{"user": user, "notification": data['room_name'] + " deleted "}])
+                notification_buffer.append([{"user": user, "notification": data['room_name'] + " deleted " }])
 
         context = {'response_message': response}
 
@@ -575,7 +562,6 @@ def delete_room(request):
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid response from'})
-
 
 @csrf_exempt
 def update_room(request):
@@ -598,17 +584,17 @@ def update_room(request):
             'y': request.POST.get('y')}
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 server in update_room')
         print(response_message)
-        if (response_message != 'Invalid response from phase2 server in update_room'):
+        if(response_message != 'Invalid response from phase2 server in update_room'):
             room_users = response.get('room_users')
-            if (room_users is not None):
+            if(room_users is not None):
                 for user in room_users:
-                    notification_buffer.append([{"user": user, "notification": data['room_name'] + " updated "}])
+                    notification_buffer.append([{"user": user, "notification": data['room_name'] + " updated " }])
 
         context = {'response_message': response_message, 'title': 'Update Room Response'}
 
@@ -616,6 +602,7 @@ def update_room(request):
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Something went wrong while update rooms.'}, status=500)
+
 
 
 @csrf_exempt
@@ -636,7 +623,7 @@ def list_room_events(request):
     }
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -646,7 +633,6 @@ def list_room_events(request):
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Something went wrong while list room events'}, status=500)
-
 
 @csrf_exempt
 def create_event(request):
@@ -673,7 +659,7 @@ def create_event(request):
     }
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -683,7 +669,6 @@ def create_event(request):
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in create event'}, status=500)
-
 
 @csrf_exempt
 def events_json(request, org_name, token):
@@ -704,7 +689,6 @@ def events_json(request, org_name, token):
     else:
         return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
-
 @csrf_exempt
 def list_events(request):
     """
@@ -718,7 +702,7 @@ def list_events(request):
     }
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -727,13 +711,11 @@ def list_events(request):
             context = {'response_message': response_message, 'title': 'List Events'}
             return render(request, 'response_template.html', context)
             pass
-        context = {'events': response_message, 'title': 'List Events Response',
-                   'org_name': request.POST.get('org_name'), 'token': token}
+        context = {'events': response_message, 'title': 'List Events Response', 'org_name': request.POST.get('org_name'), 'token': token}
 
         return render(request, 'list_events.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Error while fetching list events.'}, status=500)
-
 
 @csrf_exempt
 def create_reservation(request):
@@ -749,7 +731,6 @@ def create_reservation(request):
     token = request.session['token']
     start_date = request.POST.get('start_date')  # e.g., '2024-01-19'
     start_time = request.POST.get('start_hour')  # e.g., '09:00'
-
     data = {
         'action': 'create_reservation',
         'org_name': request.POST.get('org_name'),
@@ -764,21 +745,19 @@ def create_reservation(request):
         data['action'] = 'create_perreservation'
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 in create_reservation')
         event_users = response.get('event_users')
         room_users = response.get('room_users')
-        if (event_users is not None):
+        if(event_users is not None):
             for user in event_users:
-                notification_buffer.append([{"user": user, "notification": data['event_title'] + " reserved " + data[
-                    'room_name'] + " at time " + data['start_time']}])
-        if (room_users is not None):
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " reserved " + data['room_name'] + " at time " + data['start_time'] }])
+        if(room_users is not None):
             for user in room_users:
-                notification_buffer.append([{"user": user, "notification": data['event_title'] + " reserved " + data[
-                    'room_name'] + " at time " + data['start_time']}])
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " reserved " + data['room_name'] + " at time " + data['start_time']}])
 
         context = {'response_message': response_message, 'title': 'Reservation Response'}
 
@@ -789,6 +768,60 @@ def create_reservation(request):
     except json.JSONDecodeError:
         return HttpResponse('Invalid response from phase2 in update event')
 
+"""
+elif command['action'] == 'delete_reservation':
+                    token = command['token']
+                    org_name = command['org_name']
+                    room_name = command['room_name']
+                    event_title = command['event_title']
+                    start_time = command['start_time']
+"""
+
+@csrf_exempt
+def delete_reservation(request):
+    """
+    org_name = command['org_name']
+    room_name = command['room_name']
+    event_title = command['event_title']
+    start_time = command['start_time']
+    duration = command['duration']
+    weekly = command['weekly']
+    description = command['description']
+    """
+    token = request.session['token']
+    start_date = request.POST.get('start_date')  # e.g., '2024-01-19'
+    start_time = request.POST.get('start_hour')  # e.g., '09:00'
+    data = {
+        'action': 'delete_reservation',
+        'org_name': request.POST.get('org_name'),
+        'room_name': request.POST.get('room_name'),
+        'event_title': request.POST.get('event_title'),
+        'start_time': f'{start_date} {start_time}'
+    }
+
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response_message = response.get('response', 'Invalid response from phase2 in create_reservation')
+        event_users = response.get('event_users')
+        room_users = response.get('room_users')
+        if(event_users is not None):
+            for user in event_users:
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " reservation deleted " + data['room_name'] + " at time " + data['start_time'] }])
+        if(room_users is not None):
+            for user in room_users:
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " reservation deleted " + data['room_name'] + " at time " + data['start_time']}])
+
+        context = {'response_message': response_message, 'title': 'Reservation Response'}
+
+        send_notification(request)
+
+        return render(request, 'response_template.html', context)
+
+    except json.JSONDecodeError:
+        return HttpResponse('Invalid response from phase2 in update event')
 
 @csrf_exempt
 def update_event(request):
@@ -815,26 +848,25 @@ def update_event(request):
     }
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
     send_notification(request)
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 in update event')
         event_users = response.get('event_users')
         print(event_users)
-        if (event_users is not None):
+        if(event_users is not None):
             for user in event_users:
                 notification_buffer.append([{"user": user, "notification": data['event_title'] + " updated "}])
 
         context = {'response_message': response_message, 'title': 'Update Event Response'}
-
+        
         send_notification(request)
 
         return render(request, 'response_template.html', context)
 
     except json.JSONDecodeError:
         return HttpResponse('Invalid response from phase2 in update event')
-
 
 @csrf_exempt
 def access_event(request):
@@ -862,7 +894,6 @@ def access_event(request):
     except json.JSONDecodeError:
         return HttpResponse('Invalid response from access event in access event')
 
-
 @csrf_exempt
 def delete_event(request):
     """
@@ -878,7 +909,7 @@ def delete_event(request):
     }
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -886,7 +917,7 @@ def delete_event(request):
 
         event_users = response.get('event_users')
 
-        if (event_users is not None):
+        if(event_users is not None):
             for user in event_users:
                 notification_buffer.append([{"user": user, "notification": data['event_title'] + " deleted "}])
 
@@ -896,7 +927,6 @@ def delete_event(request):
 
     except json.JSONDecodeError:
         return HttpResponse('Invalid response from delete event')
-
 
 @csrf_exempt
 def create_event_permission(request):
@@ -919,17 +949,18 @@ def create_event_permission(request):
         data[permission + "_permission"] = 'true'
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         permission_response = json.loads(response)
         event_users = permission_response.get('event_users')
         permission_response = permission_response.get('response', 'Invalid response for permission from server')
 
-        if (event_users is not None):
+        
+
+        if(event_users is not None):
             for user in event_users:
-                notification_buffer.append(
-                    [{"user": user, "notification": data['event_title'] + " permissions updated "}])
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " permissions updated "}])
 
         context = {'response_message': permission_response,
                    'title': 'Event Permission Response'}
@@ -948,15 +979,20 @@ def room_view(request):
     end_datetime_str = command['end_date']
     """
     token = request.session['token']
+    start_date = request.POST.get('start_date')  # e.g., '2024-01-19'
+    start_time = request.POST.get('start_hour')  # e.g., '09:00'
+    end_date = request.POST.get('end_date')  # e.g., '2024-01-19'
+    end_time = request.POST.get('end_hour')  # e.g., '09:00'
     data = {
         'action': 'room_view',
         'org_name': request.POST.get('org_name'),
-        'start_date': request.POST.get('start_date'),
-        'end_date': request.POST.get('end_date'),
+        'start_date': f'{start_date} {start_time}',
+        'end_date': f'{end_date} {end_time}',
     }
 
+
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
     try:
         response = json.loads(response)
         response = response.get('response', 'Invalid response for permission from server')
@@ -965,7 +1001,6 @@ def room_view(request):
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
-
 
 @csrf_exempt
 def attach(request):
@@ -984,8 +1019,9 @@ def attach(request):
         'observation_type': request.POST.get('observation_type')
     }
 
+
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -1016,8 +1052,9 @@ def detach(request):
         'observation_type': request.POST.get('observation_type')
     }
 
+
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -1056,7 +1093,7 @@ def find_schedule(request):
     }
 
     response = sync_send_command_to_webserver(data, token)
-    # response = send_command_to_phase2_server(data, token)
+    #response = send_command_to_phase2_server(data, token)
 
     try:
         response = json.loads(response)
@@ -1068,26 +1105,9 @@ def find_schedule(request):
         return HttpResponse("Invalid response from server in schedule")
 
 
-@csrf_exempt
-def room_view(request):
-    if request.method == 'GET':
-        return render(request, 'room_view.html')
 
 
-@csrf_exempt
-def fetch_room_events(request, org_name, room_name, token):
-    data = {
-        'action': 'list_room_events',
-        'org_name': org_name,
-        'room_name': room_name
-    }
 
-    response = sync_send_command_to_webserver(data, token)
-
-    try:
-        return HttpResponse(response, content_type='application/json')
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
 
 
 @csrf_exempt
@@ -1099,7 +1119,7 @@ def process_request(request):
         response (json): Response from the deep backend server
     """
 
-    if (notification_buffer is not None):
+    if(notification_buffer is not None):
         print(notification_buffer)
 
     command = request.POST.get('command')
@@ -1144,6 +1164,8 @@ def process_request(request):
         return attach(request)
     elif command == 'detach':
         return detach(request)
+    elif command == 'delete_reservation':
+        return delete_reservation(request)
     elif command == 'find_schedule':
         print("inside find_schedule")
         return redirect("find-schedule")
@@ -1160,3 +1182,4 @@ def command_center(request):
 
     # For GET requests, or if the form is not submitted
     return render(request, 'command_center.html')
+
