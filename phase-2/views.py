@@ -426,9 +426,22 @@ def roomView(user: str, org: str, start_datetime_str, end_datetime_str):
     return room_events_report if room_events_report else "No rooms found for the specified datetime range."
 
 
-def notify_user(room_id: int, event_id: int):
-    return DB_MANAGER.notification_manager.get_users_for_room(room_id) if room_id else DB_MANAGER.notification_manager.get_users_for_event(event_id)
+def room_notify_user(room_name, organization):
+    room_id = DB_MANAGER.room_manager.get_room_id(room_name, organization)
+    return DB_MANAGER.notification_manager.get_users_for_room(room_id)
 
-def attach_observer(user: str, room_id: int, event_id: int):
-    DB_MANAGER.notification_manager.create_observation(user, room_id, event_id, "ROOM")
-    return f"User {user} is now observing room {room_id}."
+def event_notify_user(event_name, organization):
+    event_id = DB_MANAGER.event_manager.get_event_id(event_name, organization)
+    return DB_MANAGER.notification_manager.get_users_for_event(event_id)
+
+def attach_observer(user: str, room_name, event_name, observation_type, organization):
+    room_id = DB_MANAGER.room_manager.get_room_id(room_name, organization)
+    event_id = DB_MANAGER.event_manager.get_event_id(event_name, organization)
+    DB_MANAGER.notification_manager.create_observation(user, room_id, event_id, observation_type)
+    return f"User {user} is now observing room {room_id} or event {event_id}"
+
+def detach_observer(user: str, room_name, event_name, observation_type, organization):
+    room_id = DB_MANAGER.room_manager.get_room_id(room_name, organization)
+    event_id = DB_MANAGER.event_manager.get_event_id(event_name, organization)
+    DB_MANAGER.notification_manager.delete_observation(user, room_id, event_id)
+    return f"User {user} is now detached from room {room_id} or event {event_id}"

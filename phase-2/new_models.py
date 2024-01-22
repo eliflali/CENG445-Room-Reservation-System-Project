@@ -682,10 +682,10 @@ class ObservationManager(DBManager):
         return [{"username": row[0], "room_id": row[1], "event_id": row[2], "observation_type": row[3]} for row in result] if result else None
     
     def get_users_for_room(self, room_id: int) -> list:
-        result = self._execute_query_with_result("""SELECT username FROM observations WHERE room_id = ? AND observation_type = ROOM;""", (room_id,))
+        result = self._execute_query_with_result("""SELECT username FROM observations WHERE room_id = ? AND observation_type = "ROOM";""", (room_id,))
         return [row[0] for row in result] if result else None
         
     
     def get_users_for_event(self, event_id: int) -> list:
-        result = self._execute_query_with_result("""SELECT username FROM observations WHERE event_id = ? AND observation_type = EVENT;""", (event_id,))
+        result = self._execute_query_with_result("""SELECT username FROM observations WHERE event_id = ? AND observation_type = "EVENT";""", (event_id,))
         return [row[0] for row in result] if result else None

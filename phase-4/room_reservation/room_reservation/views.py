@@ -11,21 +11,21 @@ from django.shortcuts import redirect
 import requests
 from datetime import timedelta
 from asgiref.sync import async_to_sync
+from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from .decorators import login_required  # Import the decorator
 
 logger = logging.getLogger(__name__)
-PERMISSIONS = [
-    'access',
-    'delete',
-    'list',
-    'add'
-]
-
+notification_buffer = []
 
 def index(request):
     return render(request, 'index.html')
 
+def send_notification(request):
+    if(len(notification_buffer) > 0):
+        for notification in notification_buffer:
+            messages.success(request, notification[0]['notification'])
+            notification_buffer.pop(0)
 
 @csrf_exempt
 def send_command_to_phase2_server(command: dict, token: str = None):
@@ -387,11 +387,18 @@ def create_room_permission(request):
 
     try:
         permission_response = json.loads(permission_response)
+        room_users = permission_response.get('room_users')
         permission_response = permission_response.get('response', 'Invalid response for permission from server')
+
+        
+        if(room_users is not None):
+            for user in room_users:
+                notification_buffer.append([{"user": user, "notification": permission_request['room_name'] + " permissions updated " }])
 
         context = {'response_message': permission_response,
                    'title': 'Room Permission Response'}
 
+        send_notification(request)
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in create room'}, status=500)
@@ -462,8 +469,16 @@ def delete_room(request):
 
     try:
         response = json.loads(response)
+        room_users = response.get('room_users')
         response = response.get('response', 'Invalid response from phase2 server in delete_room')
+        
+        if(room_users is not None):
+            for user in room_users:
+                notification_buffer.append([{"user": user, "notification": data['room_name'] + " deleted " }])
+
         context = {'response_message': response}
+
+        send_notification(request)
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid response from'})
@@ -494,7 +509,16 @@ def update_room(request):
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 server in update_room')
+        print(response_message)
+        if(response_message != 'Invalid response from phase2 server in update_room'):
+            room_users = response.get('room_users')
+            if(room_users is not None):
+                for user in room_users:
+                    notification_buffer.append([{"user": user, "notification": data['room_name'] + " updated " }])
+
         context = {'response_message': response_message, 'title': 'Update Room Response'}
+
+        send_notification(request)
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Something went wrong while update rooms.'}, status=500)
@@ -628,7 +652,18 @@ def create_reservation(request):
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 in create_reservation')
+        event_users = response.get('event_users')
+        room_users = response.get('room_users')
+        if(event_users is not None):
+            for user in event_users:
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " reserved " + data['room_name'] + " at time " + data['start_time'] }])
+        if(room_users is not None):
+            for user in room_users:
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " reserved " + data['room_name'] + " at time " + data['start_time']}])
+
         context = {'response_message': response_message, 'title': 'Reservation Response'}
+
+        send_notification(request)
 
         return render(request, 'response_template.html', context)
 
@@ -661,11 +696,19 @@ def update_event(request):
 
     response = sync_send_command_to_webserver(data, token)
     #response = send_command_to_phase2_server(data, token)
-
+    send_notification(request)
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from phase2 in update event')
+        event_users = response.get('event_users')
+        print(event_users)
+        if(event_users is not None):
+            for user in event_users:
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " updated "}])
+
         context = {'response_message': response_message, 'title': 'Update Event Response'}
+        
+        send_notification(request)
 
         return render(request, 'response_template.html', context)
 
@@ -718,8 +761,15 @@ def delete_event(request):
     try:
         response = json.loads(response)
         response_message = response.get('response', 'Invalid response from delete event')
-        context = {'response_message': response_message, 'title': 'Delete Event Response'}
 
+        event_users = response.get('event_users')
+
+        if(event_users is not None):
+            for user in event_users:
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " deleted "}])
+
+        context = {'response_message': response_message, 'title': 'Delete Event Response'}
+        send_notification(request)
         return render(request, 'response_template.html', context)
 
     except json.JSONDecodeError:
@@ -750,11 +800,19 @@ def create_event_permission(request):
 
     try:
         permission_response = json.loads(response)
+        event_users = permission_response.get('event_users')
         permission_response = permission_response.get('response', 'Invalid response for permission from server')
+
+        
+
+        if(event_users is not None):
+            for user in event_users:
+                notification_buffer.append([{"user": user, "notification": data['event_title'] + " permissions updated "}])
 
         context = {'response_message': permission_response,
                    'title': 'Event Permission Response'}
 
+        send_notification(request)
         return render(request, 'response_template.html', context)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
@@ -791,8 +849,70 @@ def room_view(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
 
+@csrf_exempt
+def attach(request):
+    """
+    org_name = command['org_name']
+    start_datetime_str = command['start_date']
+    end_datetime_str = command['end_date']
+    """
+    token = request.session['token']
+    print(request.POST)
+    data = {
+        'action': 'attach',
+        'org_name': request.POST.get('org_name'),
+        'event_name': request.POST.get('event_title'),
+        'room_name': request.POST.get('room_name'),
+        'observation_type': request.POST.get('observation_type')
+    }
 
 
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response = response.get('response', 'Invalid response for permission from server')
+
+        context = {'response_message': response,
+                   'title': 'Attach'}
+
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
+
+
+@csrf_exempt
+def detach(request):
+    """
+    org_name = command['org_name']
+    start_datetime_str = command['start_date']
+    end_datetime_str = command['end_date']
+    """
+    token = request.session['token']
+    print(request.POST)
+    data = {
+        'action': 'detach',
+        'org_name': request.POST.get('org_name'),
+        'event_name': request.POST.get('event_title'),
+        'room_name': request.POST.get('room_name'),
+        'observation_type': request.POST.get('observation_type')
+    }
+
+
+    response = sync_send_command_to_webserver(data, token)
+    #response = send_command_to_phase2_server(data, token)
+
+    try:
+        response = json.loads(response)
+        response = response.get('response', 'Invalid response for permission from server')
+
+        context = {'response_message': response,
+                   'title': 'Detach'}
+
+        return render(request, 'response_template.html', context)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Failed to decode response from server in event permission'}, status=500)
 
 
 @csrf_exempt
@@ -846,6 +966,9 @@ def process_request(request):
         response (json): Response from the deep backend server
     """
 
+    if(notification_buffer is not None):
+        print(notification_buffer)
+
     command = request.POST.get('command')
 
     if command == 'create_organization':
@@ -884,6 +1007,10 @@ def process_request(request):
         return create_reservation(request)
     elif command == 'room_view':
         return room_view(request)
+    elif command == 'attach':
+        return attach(request)
+    elif command == 'detach':
+        return detach(request)
     elif command == 'find_schedule':
         print("inside find_schedule")
         return redirect("find-schedule")

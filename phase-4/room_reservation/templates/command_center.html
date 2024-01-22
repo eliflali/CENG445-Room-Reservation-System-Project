@@ -46,7 +46,8 @@
           owner: document.getElementById('owner').closest('div'),
           field: document.getElementById("field").closest('div'),
           value: document.getElementById("value").closest('div'),
-
+          observation_type: document.getElementById("observation_type").closest('div'),
+          
           perm_list: document.getElementById('perm_list').closest('div'),
           perm_access: document.getElementById('perm_access').closest('div'),
           perm_add: document.getElementById('perm_add').closest('div'),
@@ -90,8 +91,8 @@
           create_room_permissions: ['orgname', 'roomname','roomperm_list', 'perm_reserve', 'perm_perreserve', 'roomperm_delete', 'perm_write', 'submitbutton'],
           create_event_permission: ['orgname', 'event_title','eventperm_write', 'eventperm_read', 'submitbutton'],
           // Assuming attach and detach are valid commands and event_ids, room_id are the corresponding fields
-          attach: ['room_id', 'event_ids', 'submitbutton'],
-          detach: ['room_id', 'event_ids', 'submitbutton']
+          attach: ['roomname', 'event_title', 'orgname', 'observation_type', 'submitbutton'],
+          detach: ['roomname', 'event_title', 'orgname', 'observation_type', 'submitbutton']
         };
     
         function handleCommandChange() {
@@ -155,6 +156,8 @@
           <option value="access_event">Get Event</option>
           <option value="create_event">Create a New Event</option>
           <option value="update_event">Update Event</option>
+          <option value="attach">Attach</option>
+          <option value="detach">Detach</option>
           <option value="create_organization_permissions">
             Get Permissions for Organization
           </option>
@@ -250,6 +253,11 @@
       <div id = "category" class="form-group optional-form-group">
         <label for="category">Category: </label>
         <input type="text" id="category" name="category" />
+      </div>
+
+      <div id = "observation_type" class="form-group optional-form-group">
+        <label for="observation_type">Observation Type: </label>
+        <input type="text" id="observation_type" name="observation_type" />
       </div>
   
       <div id = "event_ids" class="form-group optional-form-group">

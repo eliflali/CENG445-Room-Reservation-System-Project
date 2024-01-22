@@ -18,6 +18,7 @@ def process_token(token):
     else:
         print("Token is valid. And, username: " + response + " is processing the command.")
         return response
+
 class CommandOperations:
     #in here make corresponding library calls:
     executor = ThreadPoolExecutor()
@@ -41,6 +42,14 @@ class CommandOperations:
         else:
             return None
     
+    @staticmethod
+    def send_room_notification(username, room_id):
+        pass
+
+    @staticmethod
+    def send_event_notification(username, event_id):
+        pass
+
     @staticmethod
     async def process_command(command):
         try:
@@ -191,7 +200,7 @@ class CommandOperations:
                         return json.dumps({"response": "Invalid token."})
                     
                     response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.access_event, user, org_name, event_title)
-                    response = views.access_event(user, org_name, event_title)
+                    #response = views.access_event(user, org_name, event_title)
                     return json.dumps({"response": response})
 
                  
@@ -205,9 +214,10 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                     
+                    room_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.room_notify_user, room_name, org_name)
                     response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.delete_room, user, org_name, room_name)
                     #response = views.delete_room(user, org_name, room_name)
-                    return json.dumps({"response": response})    
+                    return json.dumps({"response": response, "room_users": room_users})    
                 
                 
                 #update_room(user: str, room_name: str, org: str, capacity: int, x: int, y: int, working_hours: str):
@@ -224,10 +234,11 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                     
+                    room_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.room_notify_user, room_name, org_name)
                     response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.update_room, user, room_name, org_name, capacity, x, y, working_hours)
                     #response = views.update_room(user, room_name, org_name, capacity, x, y, working_hours)
 
-                    return json.dumps({"response": response})
+                    return json.dumps({"response": response, "room_users": room_users})
                 
                 
                 #list_room_events(user: str, org: str, room_name: str):
@@ -260,10 +271,11 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                     
-                    
+                    room_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.room_notify_user, room_name, org_name)
+                    event_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.event_notify_user, event_title, org_name)
                     response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.create_reservation, user, org_name, room_name, event_title, start_time, duration, weekly, description)
                     #response = views.create_reservation(user, org_name, room_name, event_title, start_time, duration, weekly, description)
-                    return json.dumps({"response": response})
+                    return json.dumps({"response": response, "room_users": room_users, "event_users": event_users})
                 
                 #create_perreservation(user: str, org: str, room_name: str, event_title: str, start_time: str, duration: int, weekly: bool, description:str):
                 elif command['action'] == 'create_perreservation':
@@ -280,9 +292,11 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                     
+                    room_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.room_notify_user, room_name, org_name)
+                    event_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.event_notify_user, event_title, org_name)
                     response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.create_perreservation, user, org_name, room_name, event_title, start_time, duration, weekly, description)
                     #response = views.create_perreservation(user, org_name, room_name, event_title, start_time, duration, weekly, description)
-                    return json.dumps({"response": response})
+                    return json.dumps({"response": response, "room_users": room_users, "event_users": event_users})
                     
                     
                 #delete_reservation(user: str, org: str, room_name: str, event_title: str, start_time: str):
@@ -297,8 +311,11 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                     
-                    response = views.delete_reservation(user, org_name, room_name, event_title, start_time)
-                    return json.dumps({"response": response})
+                    room_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.room_notify_user, room_name, org_name)
+                    event_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.event_notify_user, event_title, org_name)
+                    response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.delete_reservation, user, org_name, room_name, event_title, start_time)
+                    #response = views.delete_reservation(user, org_name, room_name, event_title, start_time)
+                    return json.dumps({"response": response, "room_users": room_users, "event_users": event_users})
                 
                 #read_event( org: str, event_title: str):
                 elif command['action'] == 'read_event':
@@ -360,9 +377,11 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                     
+                    event_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.event_notify_user, event_title, org_name)
                     response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.update_event, user, org_name, event_title, capacity, duration, weekly, description, category)
+                    print(event_users)
                     #response = views.update_event(user, org_name, event_title, capacity, duration, weekly, description, category)
-                    return json.dumps({"response": response})
+                    return json.dumps({"response": response, "event_users": event_users})
                 
                 #create_organization_permissions(user: str, org: str, list_permission: bool, add_permission: bool, access_permission: bool, delete_permission: bool):
                 elif command['action'] == 'create_organization_permissions':
@@ -397,9 +416,10 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                     
+                    room_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.room_notify_user, room_name, org_name)
                     response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.create_room_permissions, user , org_name, room_name, list_permission, reserve_permission, perreserve_permission, delete_permission, write_permission)
                     #response = views.create_room_permissions(user, org_name, room_name, list_permission, reserve_permission, perreserve_permission, delete_permission, write_permission)
-                    return json.dumps({"response": response})
+                    return json.dumps({"response": response, "room_users": room_users})
                 
                 #create_event_permissions(user: str, , read_permission: bool, write_permission: bool):
                 elif command['action'] == 'create_event_permission':
@@ -413,10 +433,11 @@ class CommandOperations:
                     user = process_token(token)
                     if not user:
                         return json.dumps({"response": "Invalid token."})
-                
+
+                    event_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.event_notify_user, event_title, org)
                     response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.create_event_permissions, user, org, event_title, read_permission, write_permission)
                     #response = views.create_event_permissions(user, org, event_title, read_permission, write_permission)
-                    return json.dumps({"response": response})
+                    return json.dumps({"response": response, "event_users": event_users})
                 
                 #find_schedule(event_titles, org_name, room_name, date, working_hours):
                 elif command['action'] == 'find_schedule':
@@ -461,33 +482,41 @@ class CommandOperations:
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                 
+                    event_users = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.event_notify_user, event_title, org_name)
                     response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.delete_event, user, org_name, event_title)
                     #response = views.delete_event(user, org_name, event_title)
-                    return json.dumps({"response": response})
+                    return json.dumps({"response": response, "event_users": event_users})
                 
-                #def attach_observer(user: str, room_id: int, event_id: int):
+                #def attach_observer(user: str, room_name: int, event_id: int):
                 elif command['action'] == 'attach':
                     token = command['token']
-                    room_id = command['room_id']
-                    event_id = command['event_id']
+                    room_name = command['room_name']
+                    event_name = command['event_name']
+                    observation_type = command['observation_type']
+                    org_name = command['org_name']
                     
                     user = process_token(token)
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                 
-                    response = views.attach_observer(user, room_id, event_id)
+                    response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.attach_observer, user, room_name, event_name, observation_type, org_name)
+                    #response = views.attach_observer(user, room_id, event_id)
                     return json.dumps({"response": response}) 
                 
                 elif command['action'] == 'detach':
                     token = command['token']
-                    room_id = command['room_id']
-                    event_id = command['event_id']
+                    room_name = command['room_name']
+                    event_name = command['event_name']
+                    observation_type = command['observation_type']
+                    org_name = command['org_name']
+                    
                     
                     user = process_token(token)
+                    response = await asyncio.get_event_loop().run_in_executor(CommandOperations.executor, views.detach_observer, user, room_name, event_name, observation_type, org_name)
                     if not user:
                         return json.dumps({"response": "Invalid token."})
                 
-                    return json.dumps({"response": "You have detached."})
+                    return json.dumps({"response": response})
                     
         else:
             return json.dumps({"response": "Invalid command"})
