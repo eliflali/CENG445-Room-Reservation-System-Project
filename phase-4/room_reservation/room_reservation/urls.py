@@ -37,5 +37,6 @@ urlpatterns = [
     path('rooms-json/<str:org_name>/<str:token>/', views.rooms_json, name='rooms-json'),
     path('events-json/<str:org_name>/<str:token>/', views.events_json, name='events-json'),
     path('room-view/', views.room_view, name='room-view'),
-    path('fetch-room-events', views.fetch_room_events, name='fetch_room_events')
+    path('fetch-room-events', views.fetch_room_events, name='fetch_room_events'),
+    path('room-view-center/', views.room_view_center, name='room-view-center'),
 ]  + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
