@@ -451,3 +451,7 @@ def detach_observer(user: str, room_name, event_name, observation_type, organiza
     event_id = DB_MANAGER.event_manager.get_event_id(event_name, organization)
     DB_MANAGER.notification_manager.delete_observation(user, room_id, event_id)
     return f"User {user} is now detached from room {room_id} or event {event_id}"
+
+
+def fetch_reservations():
+    return DB_MANAGER.reservation_manager.get_all_reservations()

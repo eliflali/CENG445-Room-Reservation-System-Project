@@ -517,6 +517,43 @@ class CommandOperations:
                         return json.dumps({"response": "Invalid token."})
                 
                     return json.dumps({"response": response})
+
+                elif command['action'] == 'fetch_reservations':
+                    rooms = [
+                        {"id": 1, "name": 'Conference Room A', "events": [
+                            {"day": 'Monday', "time": '10:00 AM', "title": 'Team Meeting'},
+                            {"day": 'Wednesday', "time": '02:00 PM', "title": 'Client Presentation'},
+                            {"day": 'Friday', "time": '01:00 PM', "title": 'Weekly Review'}
+                        ]},
+                        {"id": 2, "name": 'Conference Room B', "events": [
+                            {"day": 'Tuesday', "time": '11:00 AM', "title": 'HR Training'},
+                            {"day": 'Thursday', "time": '03:00 PM', "title": 'Product Launch Discussion'},
+                            {"day": 'Friday', "time": '10:00 AM', "title": 'Brainstorming Session'}
+                        ]},
+                        {"id": 3, "name": 'Meeting Room C', "events": [
+                            {"day": 'Monday', "time": '09:00 AM', "title": 'Project Kickoff'},
+                            {"day": 'Wednesday', "time": '11:00 AM', "title": 'Design Review'},
+                            {"day": 'Thursday', "time": '02:00 PM', "title": 'Tech Sync'}
+                        ]},
+                        {"id": 4, "name": 'Auditorium', "events": [
+                            {"day": 'Tuesday', "time": '02:00 PM', "title": 'Company Town Hall'},
+                            {"day": 'Thursday', "time": '10:00 AM', "title": 'Guest Speaker Event'}
+                        ]},
+                        {"id": 5, "name": 'Outdoor Pavilion', "events": [
+                            {"day": 'Wednesday', "time": '12:00 PM', "title": 'Team Lunch'},
+                            {"day": 'Friday', "time": '03:00 PM', "title": 'Farewell Party'}
+                        ]},
+                        {"id": 6, "name": 'Executive Boardroom', "events": [
+                            {"day": 'Monday', "time": '03:00 PM', "title": 'Board Meeting'},
+                            {"day": 'Thursday', "time": '09:00 AM', "title": 'Strategic Planning Session'}
+                        ]},
+                        {"id": 7, "name": 'Training Room', "events": [
+                            {"day": 'Tuesday', "time": '10:00 AM', "title": 'Software Training'},
+                            {"day": 'Thursday', "time": '01:00 PM', "title": 'Workplace Safety'}
+                        ]},
+
+                    ]
+                    return json.dumps(rooms)
                     
         else:
             return json.dumps({"response": "Invalid command"})
@@ -562,7 +599,7 @@ If you do not want to deal with token and user etc, you can use the following to
 {"action": "update_room", "token": "userToken", "org_name": "OrgName", "room_name": "Room1", "capacity": 60, "x": 120, "y": 220, "working_hours": "08:00-18:00", "permissions": "newPermissions"}
 
 # List Room Events
-{"action": "list_room_events", "token": "userToken", "org_name": "OrgName", "room_name": "Room1"}
+{"action": "list_room_"events"", "token": "userToken", "org_name": "OrgName", "room_name": "Room1"}
 
 # Create Reservation
 {"action": "create_reservation", "token": "userToken", "org_name": "OrgName", "room_name": "Room1", "event_title": "Event1", "start_time": "2021-04-01 09:00", "duration": 120, "weekly": false, "description": "Event Description"}

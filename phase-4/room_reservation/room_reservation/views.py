@@ -1184,9 +1184,5 @@ def command_center(request):
     return render(request, 'command_center.html')
 
 
-def fetch_room_events():
-    return None
-
-
 def room_view_center(request):
     return render(request, 'room_view.html')
