@@ -147,6 +147,7 @@ legend {
         const commandSelect = document.getElementById('command');
         const fields = {
           submitbutton: document.getElementById('submitbutton').closest('button'),
+          roomviewbutton: document.getElementById('room-view-button').closest('a'),
           orgname: document.getElementById('org_name').closest('div'),
           roomname: document.getElementById('room_name').closest('div'),
           x: document.getElementById('x').closest('div'),
@@ -207,7 +208,7 @@ legend {
           create_event: ['orgname', 'event_title', 'start_date', 'duration', 'capacity', 'description', 'category', 'submitbutton'],
           update_event: ['orgname', 'event_title', 'start_date', 'duration', 'capacity', 'description', 'category', 'submitbutton'],
           access_event: ['orgname','event_title', 'submitbutton' ], //what are params
-          room_view: ['orgname', 'start_date', 'end_date', 'submitbutton'],
+          room_view: ['orgname', 'start_date', 'end_date', 'roomviewbutton'],
           create_organization_permissions: ['orgname','perm_list', 'perm_access', 'perm_delete', 'perm_add', 'submitbutton'],
           create_room_permissions: ['orgname', 'roomname','roomperm_list', 'perm_reserve', 'perm_perreserve', 'roomperm_delete', 'perm_write', 'submitbutton'],
           create_event_permission: ['orgname', 'event_title','eventperm_write', 'eventperm_read', 'submitbutton'],
@@ -494,7 +495,7 @@ legend {
     </div>
       <button id = "submitbutton" class="button" type="submit">Execute Command</button>
     </form>
-    <a href="{% url 'room-view-center' %}" class="room-view-button">Room View</a>
+    <a href="{% url 'room-view-center' %}" id = "room-view-button" class="room-view-button">Room View</a>
 
   </body>
 </html>
