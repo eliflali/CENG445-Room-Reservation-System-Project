@@ -1,4 +1,4 @@
-# Django room reservation project. 
+# Django room reservation project
 
 ## Overview
 
